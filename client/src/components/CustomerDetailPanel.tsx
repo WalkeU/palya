@@ -116,11 +116,11 @@ export function CustomerDetailPanel({
   return (
     <>
       <div
-        className="fixed inset-0 z-30 bg-ink-950/20 animate-fade-in"
+        className="fixed inset-0 z-30 bg-night/20 animate-fade-in"
         onClick={onClose}
       />
       <aside className="fixed right-0 top-0 z-40 flex h-full w-full max-w-md animate-panel-in flex-col border-l border-ink-100 bg-ink-50 shadow-panel">
-        <div className="flex items-center justify-between border-b border-ink-100 bg-white px-5 py-4">
+        <div className="flex items-center justify-between border-b border-ink-100 bg-surface px-5 py-4">
           <div className="min-w-0 flex-1">
             <input
               value={form.name}
@@ -176,9 +176,10 @@ export function CustomerDetailPanel({
                   onClick={() => handleStageChange(s.key)}
                   className="flex flex-col items-center justify-center gap-1 rounded-lg border px-1.5 py-2.5 text-center text-[11px] font-medium leading-tight transition"
                   style={{
-                    borderColor: stage === s.key ? s.accent : "#eef0f3",
-                    backgroundColor: stage === s.key ? `${s.accent}1a` : "white",
-                    color: stage === s.key ? s.accent : "#3a4150",
+                    borderColor: stage === s.key ? s.accent : "rgb(var(--ink-100))",
+                    backgroundColor:
+                      stage === s.key ? `${s.accent}1a` : "rgb(var(--surface))",
+                    color: stage === s.key ? s.accent : "rgb(var(--ink-700))",
                   }}
                 >
                   <span
@@ -227,7 +228,7 @@ export function CustomerDetailPanel({
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                 onBlur={handleFieldBlur}
                 placeholder="Nincs megadva"
-                className="w-full rounded-lg border border-ink-100 bg-white px-3 py-2 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                className="w-full rounded-lg border border-ink-100 bg-surface px-3 py-2 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               />
             </div>
             <div>
@@ -239,7 +240,7 @@ export function CustomerDetailPanel({
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                 onBlur={handleFieldBlur}
                 placeholder="Nincs megadva"
-                className="w-full rounded-lg border border-ink-100 bg-white px-3 py-2 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                className="w-full rounded-lg border border-ink-100 bg-surface px-3 py-2 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               />
             </div>
             <div>
@@ -252,7 +253,7 @@ export function CustomerDetailPanel({
                 onBlur={handleFieldBlur}
                 rows={3}
                 placeholder="Bármilyen egyéb adat…"
-                className="w-full resize-none rounded-lg border border-ink-100 bg-white px-3 py-2 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                className="w-full resize-none rounded-lg border border-ink-100 bg-surface px-3 py-2 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               />
             </div>
           </section>
@@ -267,12 +268,12 @@ export function CustomerDetailPanel({
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Új komment…"
-                className="flex-1 rounded-lg border border-ink-100 bg-white px-3 py-2 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                className="flex-1 rounded-lg border border-ink-100 bg-surface px-3 py-2 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               />
               <button
                 type="submit"
                 disabled={postingComment || !newComment.trim()}
-                className="rounded-lg bg-ink-950 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-brand-600 disabled:opacity-50"
+                className="rounded-lg bg-night px-3.5 py-2 text-sm font-medium text-white transition hover:bg-brand-600 disabled:opacity-50"
               >
                 Küldés
               </button>
@@ -280,7 +281,7 @@ export function CustomerDetailPanel({
           </section>
         </div>
 
-        <div className="border-t border-ink-100 bg-white px-5 py-3">
+        <div className="border-t border-ink-100 bg-surface px-5 py-3">
           <button
             onClick={handleDelete}
             className="text-xs font-medium text-ink-500 transition hover:text-scale-1"

@@ -255,7 +255,7 @@ export default function Tasks() {
     <div className="flex h-screen flex-col">
       <TopBar />
 
-      <div className="border-b border-ink-100 bg-white px-6">
+      <div className="border-b border-ink-100 bg-surface px-6">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between">
           <div className="flex gap-1">
             {[
@@ -269,7 +269,7 @@ export default function Tasks() {
                 className="border-b-2 px-3 py-3 text-sm font-medium transition"
                 style={{
                   borderColor: tab === t.key ? "#3a8a74" : "transparent",
-                  color: tab === t.key ? "#14171c" : "#6b7280",
+                  color: tab === t.key ? "rgb(var(--ink-950))" : "rgb(var(--ink-500))",
                 }}
               >
                 {t.label}
@@ -279,7 +279,7 @@ export default function Tasks() {
           {tab !== "closed" && (
             <button
               onClick={() => setCreating(true)}
-              className="rounded-lg bg-ink-950 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-brand-600"
+              className="rounded-lg bg-night px-3.5 py-2 text-sm font-medium text-white transition hover:bg-brand-600"
             >
               + Új feladat
             </button>

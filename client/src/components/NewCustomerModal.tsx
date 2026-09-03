@@ -50,13 +50,13 @@ export function NewCustomerModal({
   return (
     <>
       <div
-        className="fixed inset-0 z-30 bg-ink-950/25 animate-fade-in"
+        className="fixed inset-0 z-30 bg-night/25 animate-fade-in"
         onClick={onClose}
       />
       <div className="fixed inset-0 z-40 flex items-center justify-center px-4">
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-md animate-rise-in rounded-2xl border border-ink-100 bg-white p-6 shadow-panel"
+          className="w-full max-w-md animate-rise-in rounded-2xl border border-ink-100 bg-surface p-6 shadow-panel"
         >
           <h2 className="mb-4 font-display text-xl font-medium text-ink-950">
             Új ügyfél
@@ -70,7 +70,7 @@ export function NewCustomerModal({
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-surface focus:ring-2 focus:ring-brand-100"
               placeholder="Ügyfél neve"
             />
           </div>
@@ -82,7 +82,7 @@ export function NewCustomerModal({
             <input
               value={business}
               onChange={(e) => setBusiness(e.target.value)}
-              className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-surface focus:ring-2 focus:ring-brand-100"
               placeholder="Cég / üzlet neve"
             />
             <p className="mt-1 text-[11px] text-ink-500">
@@ -98,7 +98,7 @@ export function NewCustomerModal({
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-100"
+                className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-surface focus:ring-2 focus:ring-brand-100"
               />
             </div>
             <div>
@@ -108,7 +108,7 @@ export function NewCustomerModal({
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-100"
+                className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-surface focus:ring-2 focus:ring-brand-100"
               />
             </div>
           </div>
@@ -121,7 +121,7 @@ export function NewCustomerModal({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={2}
-              className="w-full resize-none rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-100"
+              className="w-full resize-none rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-surface focus:ring-2 focus:ring-brand-100"
             />
           </div>
 
@@ -137,9 +137,10 @@ export function NewCustomerModal({
                   onClick={() => setStage(s.key)}
                   className="flex flex-col items-center justify-center gap-1 rounded-lg border px-1.5 py-2.5 text-center text-[11px] font-medium leading-tight transition"
                   style={{
-                    borderColor: stage === s.key ? s.accent : "#eef0f3",
-                    backgroundColor: stage === s.key ? `${s.accent}1a` : "#f7f8fa",
-                    color: stage === s.key ? s.accent : "#3a4150",
+                    borderColor: stage === s.key ? s.accent : "rgb(var(--ink-100))",
+                    backgroundColor:
+                      stage === s.key ? `${s.accent}1a` : "rgb(var(--ink-50))",
+                    color: stage === s.key ? s.accent : "rgb(var(--ink-700))",
                   }}
                 >
                   <span
@@ -169,7 +170,7 @@ export function NewCustomerModal({
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-lg bg-ink-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-600 disabled:opacity-60"
+              className="rounded-lg bg-night px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-600 disabled:opacity-60"
             >
               {submitting ? "Létrehozás…" : "Létrehozás"}
             </button>

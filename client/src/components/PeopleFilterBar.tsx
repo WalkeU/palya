@@ -16,8 +16,8 @@ export function PeopleFilterBar({
         onClick={() => onSelect(null)}
         className="rounded-full px-3 py-1 text-xs font-medium transition"
         style={{
-          backgroundColor: selectedId === null ? "#14171c" : "#eef0f3",
-          color: selectedId === null ? "white" : "#3a4150",
+          backgroundColor: selectedId === null ? "rgb(var(--night))" : "rgb(var(--ink-100))",
+          color: selectedId === null ? "white" : "rgb(var(--ink-700))",
         }}
       >
         Mind

@@ -71,6 +71,19 @@ db.exec(`
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS tags (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    color TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS task_tags (
+    task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (task_id, tag_id)
+  );
+
   CREATE INDEX IF NOT EXISTS idx_customers_stage ON customers(stage);
   CREATE INDEX IF NOT EXISTS idx_comments_customer ON comments(customer_id);
   CREATE INDEX IF NOT EXISTS idx_tasks_stage ON tasks(stage);

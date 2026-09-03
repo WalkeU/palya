@@ -52,6 +52,21 @@ export type TaskStage =
   | "done"
   | "closed";
 
+export interface Tag {
+  id: number;
+  name: string;
+  color: string;
+}
+
+export const TAG_COLORS = [
+  "#d99a3d",
+  "#4d7ea8",
+  "#7c6bb0",
+  "#3a8a74",
+  "#c85a4a",
+  "#c15b8c",
+] as const;
+
 export interface Task {
   id: number;
   title: string;
@@ -65,6 +80,7 @@ export interface Task {
   created_by: number | null;
   created_at: string;
   updated_at: string;
+  tags: Tag[];
 }
 
 export interface TeamMember {

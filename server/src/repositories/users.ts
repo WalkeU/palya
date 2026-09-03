@@ -71,6 +71,13 @@ export const usersRepo = {
     ).run(passwordHash, id);
   },
 
+  updatePassword(id: number, passwordHash: string) {
+    db.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`).run(
+      passwordHash,
+      id
+    );
+  },
+
   updateProfile(id: number, nickname: string, avatar: string | null) {
     db.prepare(`UPDATE users SET nickname = ?, avatar = ? WHERE id = ?`).run(
       nickname,

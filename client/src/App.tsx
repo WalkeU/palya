@@ -4,7 +4,7 @@ import Login from "./pages/Login";
 import ChangePassword from "./pages/ChangePassword";
 import Board from "./pages/Board";
 import Tasks from "./pages/Tasks";
-import Users from "./pages/Users";
+import Settings from "./pages/Settings";
 
 function LoadingScreen() {
   return (
@@ -39,7 +39,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Board />} />
       <Route path="/feladatok" element={<Tasks />} />
-      {user.role === "superadmin" && <Route path="/felhasznalok" element={<Users />} />}
+      <Route path="/beallitasok" element={<Settings />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

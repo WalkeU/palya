@@ -5,6 +5,7 @@ import {
   loginSchema,
   changePasswordSchema,
   updateProfileSchema,
+  changeOwnPasswordSchema,
 } from "../utils/validation";
 import { requireAuth } from "../middleware/auth";
 import { loginRateLimiter, passwordChangeRateLimiter } from "../middleware/rateLimit";
@@ -94,3 +95,24 @@ authRouter.patch("/profile", requireAuth, (req, res) => {
   const updated = usersRepo.findById(user.id)!;
   res.json({ user: publicUser(updated) });
 });
+
+authRouter.patch(
+  "/password",
+  passwordChangeRateLimiter,
+  requireAuth,
+  (req, res) => {
+    const parsed = changeOwnPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res
+        .status(400)
+        .json({ error: "invalid_input", details: parsed.error.flatten() });
+    }
+    const user = (req as any).user;
+    if (!verifyPassword(parsed.data.currentPassword, user.password_hash)) {
+      return res.status(401).json({ error: "invalid_current_password" });
+    }
+    const hash = hashPassword(parsed.data.newPassword);
+    usersRepo.updatePassword(user.id, hash);
+    res.json({ ok: true });
+  }
+);

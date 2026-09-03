@@ -36,9 +36,9 @@ export function ScalePicker({
               onClick={() => onChange(n)}
               className="flex h-9 flex-1 items-center justify-center rounded-lg border text-sm font-semibold transition"
               style={{
-                borderColor: active ? color : "#eef0f3",
-                backgroundColor: active ? `${color}1f` : "#f7f8fa",
-                color: active ? color : "#9aa0aa",
+                borderColor: active ? color : "rgb(var(--ink-100))",
+                backgroundColor: active ? `${color}1f` : "rgb(var(--ink-50))",
+                color: active ? color : "rgb(var(--ink-500))",
               }}
             >
               {n}

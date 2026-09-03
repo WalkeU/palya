@@ -26,7 +26,7 @@ export function CustomerCard({
       {...attributes}
       {...listeners}
       onClick={onOpen}
-      className="group cursor-grab rounded-xl border border-ink-100 bg-white p-3.5 shadow-card transition hover:-translate-y-0.5 hover:shadow-card-hover active:cursor-grabbing"
+      className="group cursor-grab rounded-xl border border-ink-100 bg-surface p-3.5 shadow-card transition hover:-translate-y-0.5 hover:shadow-card-hover active:cursor-grabbing"
     >
       <div className="mb-1.5 flex items-start justify-between gap-2">
         <div className="min-w-0">

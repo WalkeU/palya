@@ -2,6 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "../types";
 import { Avatar } from "./Avatar";
+import { TagChip } from "./TagChip";
 
 export function TaskCard({
   task,
@@ -26,7 +27,7 @@ export function TaskCard({
       {...attributes}
       {...listeners}
       onClick={onOpen}
-      className="group cursor-grab rounded-xl border border-ink-100 bg-white p-3.5 shadow-card transition hover:-translate-y-0.5 hover:shadow-card-hover active:cursor-grabbing"
+      className="group cursor-grab rounded-xl border border-ink-100 bg-surface p-3.5 shadow-card transition hover:-translate-y-0.5 hover:shadow-card-hover active:cursor-grabbing"
     >
       <div className="mb-1.5 flex items-start justify-between gap-2">
         <h3 className="min-w-0 flex-1 truncate text-sm font-semibold leading-snug text-ink-950">
@@ -43,6 +44,14 @@ export function TaskCard({
 
       {task.description && (
         <p className="line-clamp-2 text-xs text-ink-500">{task.description}</p>
+      )}
+
+      {task.tags.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {task.tags.map((t) => (
+            <TagChip key={t.id} tag={t} />
+          ))}
+        </div>
       )}
     </div>
   );

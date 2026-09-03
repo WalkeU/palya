@@ -75,11 +75,14 @@ const taskStageEnum = z.enum([
   "closed",
 ]);
 
+const tagIdsField = z.array(z.number().int()).optional();
+
 export const createTaskSchema = z.object({
   title: z.string().trim().min(1, "A cím megadása kötelező").max(200),
   description: z.string().trim().max(5000).nullable().optional(),
   stage: taskStageEnum.default("backlog"),
   assignee_id: z.number().int().nullable().optional(),
+  tag_ids: tagIdsField,
 });
 
 export const updateTaskSchema = z.object({
@@ -87,6 +90,21 @@ export const updateTaskSchema = z.object({
   description: z.string().trim().max(5000).nullable().optional(),
   stage: taskStageEnum.optional(),
   assignee_id: z.number().int().nullable().optional(),
+  tag_ids: tagIdsField,
+});
+
+export const TAG_COLORS = [
+  "#d99a3d",
+  "#4d7ea8",
+  "#7c6bb0",
+  "#3a8a74",
+  "#c85a4a",
+  "#c15b8c",
+] as const;
+
+export const createTagSchema = z.object({
+  name: z.string().trim().min(1, "A név megadása kötelező").max(30),
+  color: z.enum(TAG_COLORS),
 });
 
 export const taskReorderSchema = z.object({
@@ -103,3 +121,14 @@ export const updateProfileSchema = z.object({
     .nullable()
     .optional(),
 });
+
+export const changeOwnPasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "A jelenlegi jelszó megadása kötelező"),
+    newPassword: z.string().min(10, "A jelszónak legalább 10 karakter hosszúnak kell lennie"),
+    newPasswordConfirm: z.string().min(1),
+  })
+  .refine((data) => data.newPassword === data.newPasswordConfirm, {
+    message: "A két jelszó nem egyezik",
+    path: ["newPasswordConfirm"],
+  });

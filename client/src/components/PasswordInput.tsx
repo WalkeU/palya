@@ -8,7 +8,7 @@ export function PasswordInput(props: InputHTMLAttributes<HTMLInputElement>) {
       <input
         {...props}
         type={visible ? "text" : "password"}
-        className={`w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 pr-10 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-100 ${props.className || ""}`}
+        className={`w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 pr-10 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:bg-surface focus:ring-2 focus:ring-brand-100 ${props.className || ""}`}
       />
       <button
         type="button"

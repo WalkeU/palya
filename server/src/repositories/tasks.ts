@@ -1,4 +1,5 @@
 import { db } from "../db";
+import { tagsRepo, type Tag } from "./tags";
 
 export type TaskStage =
   | "backlog"
@@ -22,6 +23,7 @@ export interface Task {
   created_by: number | null;
   created_at: string;
   updated_at: string;
+  tags: Tag[];
 }
 
 export interface TaskInput {
@@ -29,6 +31,7 @@ export interface TaskInput {
   description?: string | null;
   stage: TaskStage;
   assignee_id?: number | null;
+  tag_ids?: number[];
 }
 
 export interface TaskUpdateInput {
@@ -37,6 +40,7 @@ export interface TaskUpdateInput {
   stage?: TaskStage;
   assignee_id?: number | null;
   position?: number;
+  tag_ids?: number[];
 }
 
 const SELECT_TASK = `
@@ -44,17 +48,25 @@ const SELECT_TASK = `
   FROM tasks t LEFT JOIN users u ON u.id = t.assignee_id
 `;
 
+function attachTags(tasks: Omit<Task, "tags">[]): Task[] {
+  const tagsByTask = tagsRepo.listForTasks(tasks.map((t) => t.id));
+  return tasks.map((t) => ({ ...t, tags: tagsByTask.get(t.id) ?? [] }));
+}
+
 export const tasksRepo = {
   list(): Task[] {
-    return db
+    const rows = db
       .prepare(`${SELECT_TASK} ORDER BY t.stage, t.position ASC, t.id ASC`)
-      .all() as Task[];
+      .all() as Omit<Task, "tags">[];
+    return attachTags(rows);
   },
 
   findById(id: number): Task | undefined {
-    return db.prepare(`${SELECT_TASK} WHERE t.id = ?`).get(id) as
-      | Task
+    const row = db.prepare(`${SELECT_TASK} WHERE t.id = ?`).get(id) as
+      | Omit<Task, "tags">
       | undefined;
+    if (!row) return undefined;
+    return attachTags([row])[0];
   },
 
   nextPosition(stage: TaskStage): number {
@@ -81,7 +93,11 @@ export const tasksRepo = {
         position,
         createdBy,
       });
-    return this.findById(info.lastInsertRowid as number)!;
+    const id = info.lastInsertRowid as number;
+    if (input.tag_ids) {
+      tagsRepo.setTaskTags(id, input.tag_ids);
+    }
+    return this.findById(id)!;
   },
 
   update(id: number, input: TaskUpdateInput): Task | undefined {
@@ -104,6 +120,10 @@ export const tasksRepo = {
         assignee_id = @assigneeId, position = @position, updated_at = datetime('now')
        WHERE id = @id`
     ).run({ ...merged, id });
+
+    if (input.tag_ids !== undefined) {
+      tagsRepo.setTaskTags(id, input.tag_ids);
+    }
 
     return this.findById(id);
   },

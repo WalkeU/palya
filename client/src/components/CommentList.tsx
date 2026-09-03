@@ -25,7 +25,7 @@ export function CommentList({ comments }: { comments: Comment[] }) {
   return (
     <div className="space-y-3">
       {comments.map((c) => (
-        <div key={c.id} className="rounded-lg border border-ink-100 bg-white p-3">
+        <div key={c.id} className="rounded-lg border border-ink-100 bg-surface p-3">
           <div className="mb-1 flex items-center justify-between">
             <span className="text-xs font-semibold text-ink-900">
               {c.author_nickname || c.author_email || "Ismeretlen"}

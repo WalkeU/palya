@@ -44,7 +44,7 @@ export default function Login() {
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-2xl border border-ink-100 bg-white p-7 shadow-card"
+          className="rounded-2xl border border-ink-100 bg-surface p-7 shadow-card"
         >
           <div className="mb-4">
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
@@ -56,7 +56,7 @@ export default function Login() {
               autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:bg-surface focus:ring-2 focus:ring-brand-100"
               placeholder="nev@pelda.hu"
             />
           </div>
@@ -81,7 +81,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-lg bg-ink-950 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600 disabled:opacity-60"
+            className="w-full rounded-lg bg-night py-2.5 text-sm font-medium text-white transition hover:bg-brand-600 disabled:opacity-60"
           >
             {submitting ? "Belépés…" : "Belépés"}
           </button>

@@ -13,14 +13,14 @@ export function ScaleBadge({
   value: number | null;
   label: string;
 }) {
-  const color = value ? SCALE_COLORS[value] : "#c7cbd1";
+  const color = value ? SCALE_COLORS[value] : "rgb(var(--ink-300))";
   return (
     <span
       title={`${label}${value ? `: ${value}/5` : ": nincs beállítva"}`}
       className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold"
       style={{
-        color: value ? color : "#9aa0aa",
-        backgroundColor: value ? `${color}1a` : "#eef0f3",
+        color: value ? color : "rgb(var(--ink-500))",
+        backgroundColor: value ? `${color}1a` : "rgb(var(--ink-100))",
       }}
     >
       <span

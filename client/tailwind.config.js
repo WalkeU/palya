@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class",
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
@@ -14,19 +15,19 @@ export default {
       },
       colors: {
         ink: {
-          950: "#14171c",
-          900: "#1b1f27",
-          700: "#3a4150",
-          500: "#6b7280",
-          300: "#c7cbd1",
-          100: "#eef0f3",
-          50: "#f7f8fa",
+          950: "rgb(var(--ink-950) / <alpha-value>)",
+          900: "rgb(var(--ink-900) / <alpha-value>)",
+          700: "rgb(var(--ink-700) / <alpha-value>)",
+          500: "rgb(var(--ink-500) / <alpha-value>)",
+          300: "rgb(var(--ink-300) / <alpha-value>)",
+          100: "rgb(var(--ink-100) / <alpha-value>)",
+          50: "rgb(var(--ink-50) / <alpha-value>)",
         },
         brand: {
-          600: "#2f6f5e",
-          500: "#3a8a74",
-          400: "#4fa88f",
-          100: "#e2f2ec",
+          600: "rgb(var(--brand-600) / <alpha-value>)",
+          500: "rgb(var(--brand-500) / <alpha-value>)",
+          400: "rgb(var(--brand-400) / <alpha-value>)",
+          100: "rgb(var(--brand-100) / <alpha-value>)",
         },
         scale: {
           1: "#e0564b",
@@ -35,6 +36,8 @@ export default {
           4: "#8fbf5a",
           5: "#4fa870",
         },
+        surface: "rgb(var(--surface) / <alpha-value>)",
+        night: "rgb(var(--night) / <alpha-value>)",
       },
       boxShadow: {
         card: "0 1px 2px rgba(20, 23, 28, 0.06), 0 1px 1px rgba(20, 23, 28, 0.04)",

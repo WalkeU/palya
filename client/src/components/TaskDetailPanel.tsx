@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import type { Task, TaskStage, TeamMember } from "../types";
+import type { Tag, Task, TaskStage, TeamMember } from "../types";
 import { TASK_STAGES } from "../types";
 import { api } from "../api/client";
+import { TagChip } from "./TagChip";
 
 export function TaskDetailPanel({
   task,
@@ -27,12 +28,25 @@ export function TaskDetailPanel({
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [titleError, setTitleError] = useState<string | null>(null);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
 
   useEffect(() => {
     setForm({ title: task.title, description: task.description || "" });
     setStage(task.stage);
     setAssigneeId(task.assignee_id ? String(task.assignee_id) : "");
   }, [task.id]);
+
+  useEffect(() => {
+    api<{ tags: Tag[] }>("/api/tags").then((d) => setAllTags(d.tags));
+  }, []);
+
+  function toggleTag(id: number) {
+    const current = task.tags.map((t) => t.id);
+    const next = current.includes(id)
+      ? current.filter((t) => t !== id)
+      : [...current, id];
+    persist({ tag_ids: next });
+  }
 
   async function persist(patch: Record<string, unknown>) {
     setSaving(true);
@@ -81,11 +95,11 @@ export function TaskDetailPanel({
   return (
     <>
       <div
-        className="fixed inset-0 z-30 bg-ink-950/20 animate-fade-in"
+        className="fixed inset-0 z-30 bg-night/20 animate-fade-in"
         onClick={onClose}
       />
       <aside className="fixed right-0 top-0 z-40 flex h-full w-full max-w-md animate-panel-in flex-col border-l border-ink-100 bg-ink-50 shadow-panel">
-        <div className="flex items-center justify-between border-b border-ink-100 bg-white px-5 py-4">
+        <div className="flex items-center justify-between border-b border-ink-100 bg-surface px-5 py-4">
           <div className="min-w-0 flex-1">
             <input
               value={form.title}
@@ -126,7 +140,7 @@ export function TaskDetailPanel({
           {stage === "backlog" && (
             <button
               onClick={() => handleStageChange("todo")}
-              className="mb-5 w-full rounded-lg bg-ink-950 py-2 text-sm font-medium text-white transition hover:bg-brand-600"
+              className="mb-5 w-full rounded-lg bg-night py-2 text-sm font-medium text-white transition hover:bg-brand-600"
             >
               Táblára
             </button>
@@ -134,7 +148,7 @@ export function TaskDetailPanel({
           {stage === "done" && (
             <button
               onClick={() => handleStageChange("closed")}
-              className="mb-5 w-full rounded-lg bg-ink-950 py-2 text-sm font-medium text-white transition hover:bg-brand-600"
+              className="mb-5 w-full rounded-lg bg-night py-2 text-sm font-medium text-white transition hover:bg-brand-600"
             >
               Lezárás
             </button>
@@ -159,9 +173,10 @@ export function TaskDetailPanel({
                   onClick={() => handleStageChange(s.key)}
                   className="flex flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2.5 text-center text-[10px] font-medium leading-tight transition"
                   style={{
-                    borderColor: stage === s.key ? s.accent : "#eef0f3",
-                    backgroundColor: stage === s.key ? `${s.accent}1a` : "white",
-                    color: stage === s.key ? s.accent : "#3a4150",
+                    borderColor: stage === s.key ? s.accent : "rgb(var(--ink-100))",
+                    backgroundColor:
+                      stage === s.key ? `${s.accent}1a` : "rgb(var(--surface))",
+                    color: stage === s.key ? s.accent : "rgb(var(--ink-700))",
                   }}
                 >
                   <span
@@ -179,6 +194,24 @@ export function TaskDetailPanel({
             )}
           </section>
 
+          {allTags.length > 0 && (
+            <section className="mb-5">
+              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
+                Címkék
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {allTags.map((t) => (
+                  <button key={t.id} type="button" onClick={() => toggleTag(t.id)}>
+                    <TagChip
+                      tag={t}
+                      active={task.tags.some((tt) => tt.id === t.id)}
+                    />
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
           <section className="mb-5 space-y-3">
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
@@ -187,7 +220,7 @@ export function TaskDetailPanel({
               <select
                 value={assigneeId}
                 onChange={(e) => handleAssigneeChange(e.target.value)}
-                className="w-full rounded-lg border border-ink-100 bg-white px-3 py-2 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                className="w-full rounded-lg border border-ink-100 bg-surface px-3 py-2 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               >
                 <option value="">Nincs hozzárendelve</option>
                 {members.map((m) => (
@@ -209,13 +242,13 @@ export function TaskDetailPanel({
                 onBlur={handleDescriptionBlur}
                 rows={4}
                 placeholder="Bármilyen egyéb adat…"
-                className="w-full resize-none rounded-lg border border-ink-100 bg-white px-3 py-2 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                className="w-full resize-none rounded-lg border border-ink-100 bg-surface px-3 py-2 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               />
             </div>
           </section>
         </div>
 
-        <div className="border-t border-ink-100 bg-white px-5 py-3">
+        <div className="border-t border-ink-100 bg-surface px-5 py-3">
           <button
             onClick={handleDelete}
             className="text-xs font-medium text-ink-500 transition hover:text-scale-1"
