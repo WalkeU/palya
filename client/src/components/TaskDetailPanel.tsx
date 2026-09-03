@@ -237,6 +237,17 @@ export function TaskDetailPanel({
                 onChange={handleAssigneeChange}
               />
             </div>
+            <div className="flex items-center gap-1.5 text-xs text-ink-500">
+              <Avatar
+                avatar={task.creator_avatar}
+                name={task.creator_nickname || task.creator_email}
+                size={16}
+              />
+              <span className="truncate">
+                {task.creator_nickname || task.creator_email || "Ismeretlen"} ·{" "}
+                {formatDateTime(task.created_at)}
+              </span>
+            </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
                 Leírás
@@ -256,25 +267,12 @@ export function TaskDetailPanel({
         </div>
 
         <div className="border-t border-ink-100 bg-surface px-5 py-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-2">
-              <Avatar
-                avatar={task.creator_avatar}
-                name={task.creator_nickname || task.creator_email}
-                size={20}
-              />
-              <span className="truncate text-xs text-ink-500">
-                {task.creator_nickname || task.creator_email || "Ismeretlen"} ·{" "}
-                {formatDateTime(task.created_at)}
-              </span>
-            </div>
-            <button
-              onClick={handleDelete}
-              className="shrink-0 text-xs font-medium text-ink-500 transition hover:text-scale-1"
-            >
-              Feladat törlése
-            </button>
-          </div>
+          <button
+            onClick={handleDelete}
+            className="text-xs font-medium text-ink-500 transition hover:text-scale-1"
+          >
+            Feladat törlése
+          </button>
         </div>
       </aside>
     </>

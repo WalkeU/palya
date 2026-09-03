@@ -2,9 +2,9 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
 import ChangePassword from "./pages/ChangePassword";
+import Home from "./pages/Home";
 import Board from "./pages/Board";
 import Tasks from "./pages/Tasks";
-import Settings from "./pages/Settings";
 
 function LoadingScreen() {
   return (
@@ -37,9 +37,9 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Board />} />
+      <Route path="/" element={<Home />} />
+      <Route path="/ugyfelek" element={<Board />} />
       <Route path="/feladatok" element={<Tasks />} />
-      <Route path="/beallitasok" element={<Settings />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

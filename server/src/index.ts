@@ -15,6 +15,9 @@ import { customersRouter } from "./routes/customers";
 import { tasksRouter } from "./routes/tasks";
 import { membersRouter } from "./routes/members";
 import { tagsRouter } from "./routes/tags";
+import { notesRouter } from "./routes/notes";
+import { linksRouter } from "./routes/links";
+import { settingsRouter } from "./routes/settings";
 
 const DEV_SESSION_SECRET = "dev_secret_change_me";
 const sessionSecret = process.env.SESSION_SECRET || DEV_SESSION_SECRET;
@@ -98,6 +101,9 @@ app.use("/api/customers", customersRouter);
 app.use("/api/tasks", tasksRouter);
 app.use("/api/members", membersRouter);
 app.use("/api/tags", tagsRouter);
+app.use("/api/notes", notesRouter);
+app.use("/api/links", linksRouter);
+app.use("/api/settings", settingsRouter);
 
 const clientDist = path.join(__dirname, "..", "..", "client-dist");
 app.use(express.static(clientDist));

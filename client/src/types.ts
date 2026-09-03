@@ -93,6 +93,33 @@ export interface Task {
   tags: Tag[];
 }
 
+export interface Note {
+  id: number;
+  text: string;
+  color: string;
+  created_by: number | null;
+  author_nickname: string | null;
+  author_email: string | null;
+  author_avatar: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Link {
+  id: number;
+  label: string;
+  url: string;
+  icon: string | null;
+  position: number;
+  created_by: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AppSettings {
+  linksEnabled: boolean;
+}
+
 export interface TeamMember {
   id: number;
   nickname: string | null;

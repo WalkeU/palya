@@ -124,6 +124,48 @@ export const updateProfileSchema = z.object({
     .optional(),
 });
 
+export const createNoteSchema = z.object({
+  text: z.string().trim().min(1, "A jegyzet nem lehet üres").max(500),
+  color: z.enum(TAG_COLORS).optional(),
+});
+
+export const updateNoteSchema = z.object({
+  text: z.string().trim().min(1, "A jegyzet nem lehet üres").max(500).optional(),
+  color: z.enum(TAG_COLORS).optional(),
+});
+
+const linkUrlField = z
+  .string()
+  .trim()
+  .max(2000)
+  .refine(
+    (v) => {
+      try {
+        const u = new URL(v);
+        return u.protocol === "http:" || u.protocol === "https:";
+      } catch {
+        return false;
+      }
+    },
+    { message: "Érvénytelen link (http:// vagy https:// szükséges)" }
+  );
+
+export const createLinkSchema = z.object({
+  label: z.string().trim().min(1, "A név megadása kötelező").max(60),
+  url: linkUrlField,
+  icon: z.string().trim().max(8).nullable().optional(),
+});
+
+export const updateLinkSchema = z.object({
+  label: z.string().trim().min(1).max(60).optional(),
+  url: linkUrlField.optional(),
+  icon: z.string().trim().max(8).nullable().optional(),
+});
+
+export const updateAppSettingsSchema = z.object({
+  linksEnabled: z.boolean().optional(),
+});
+
 export const changeOwnPasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "A jelenlegi jelszó megadása kötelező"),
