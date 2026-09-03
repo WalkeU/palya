@@ -21,6 +21,8 @@ export interface Task {
   assignee_avatar: string | null;
   position: number;
   created_by: number | null;
+  creator_nickname: string | null;
+  creator_email: string | null;
   created_at: string;
   updated_at: string;
   tags: Tag[];
@@ -44,8 +46,11 @@ export interface TaskUpdateInput {
 }
 
 const SELECT_TASK = `
-  SELECT t.*, u.nickname as assignee_nickname, u.email as assignee_email, u.avatar as assignee_avatar
-  FROM tasks t LEFT JOIN users u ON u.id = t.assignee_id
+  SELECT t.*, u.nickname as assignee_nickname, u.email as assignee_email, u.avatar as assignee_avatar,
+         c.nickname as creator_nickname, c.email as creator_email
+  FROM tasks t
+  LEFT JOIN users u ON u.id = t.assignee_id
+  LEFT JOIN users c ON c.id = t.created_by
 `;
 
 function attachTags(tasks: Omit<Task, "tags">[]): Task[] {

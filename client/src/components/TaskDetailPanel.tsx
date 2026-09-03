@@ -3,6 +3,18 @@ import type { Tag, Task, TaskStage, TeamMember } from "../types";
 import { TASK_STAGES } from "../types";
 import { api } from "../api/client";
 import { TagChip } from "./TagChip";
+import { AssigneePicker } from "./AssigneePicker";
+import { useEscapeToClose } from "../hooks/useEscapeToClose";
+
+function formatDateTime(iso: string): string {
+  return new Date(iso + "Z").toLocaleString("hu-HU", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export function TaskDetailPanel({
   task,
@@ -17,6 +29,7 @@ export function TaskDetailPanel({
   onUpdated: (t: Task) => void;
   onDeleted: (id: number) => void;
 }) {
+  useEscapeToClose(onClose);
   const [form, setForm] = useState({
     title: task.title,
     description: task.description || "",
@@ -29,11 +42,13 @@ export function TaskDetailPanel({
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [showMeta, setShowMeta] = useState(false);
 
   useEffect(() => {
     setForm({ title: task.title, description: task.description || "" });
     setStage(task.stage);
     setAssigneeId(task.assignee_id ? String(task.assignee_id) : "");
+    setShowMeta(false);
   }, [task.id]);
 
   useEffect(() => {
@@ -217,18 +232,11 @@ export function TaskDetailPanel({
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
                 Felelős
               </label>
-              <select
+              <AssigneePicker
+                members={members}
                 value={assigneeId}
-                onChange={(e) => handleAssigneeChange(e.target.value)}
-                className="w-full rounded-lg border border-ink-100 bg-surface px-3 py-2 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
-              >
-                <option value="">Nincs hozzárendelve</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.nickname || m.email}
-                  </option>
-                ))}
-              </select>
+                onChange={handleAssigneeChange}
+              />
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
@@ -249,12 +257,26 @@ export function TaskDetailPanel({
         </div>
 
         <div className="border-t border-ink-100 bg-surface px-5 py-3">
-          <button
-            onClick={handleDelete}
-            className="text-xs font-medium text-ink-500 transition hover:text-scale-1"
-          >
-            Feladat törlése
-          </button>
+          <div className="mb-2 flex items-center justify-between">
+            <button
+              onClick={() => setShowMeta((v) => !v)}
+              className="text-xs font-medium text-ink-500 transition hover:text-ink-900"
+            >
+              {showMeta ? "Létrehozás elrejtése" : "Ki és mikor hozta létre?"}
+            </button>
+            <button
+              onClick={handleDelete}
+              className="text-xs font-medium text-ink-500 transition hover:text-scale-1"
+            >
+              Feladat törlése
+            </button>
+          </div>
+          {showMeta && (
+            <p className="text-xs text-ink-500 animate-fade-in">
+              {task.creator_nickname || task.creator_email || "Ismeretlen"} hozta
+              létre: {formatDateTime(task.created_at)}
+            </p>
+          )}
         </div>
       </aside>
     </>

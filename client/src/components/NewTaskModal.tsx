@@ -3,6 +3,8 @@ import type { Tag, Task, TaskStage, TeamMember } from "../types";
 import { TASK_STAGES } from "../types";
 import { api } from "../api/client";
 import { TagChip } from "./TagChip";
+import { AssigneePicker } from "./AssigneePicker";
+import { useEscapeToClose } from "../hooks/useEscapeToClose";
 
 export function NewTaskModal({
   members,
@@ -17,6 +19,7 @@ export function NewTaskModal({
   onClose: () => void;
   onCreated: (t: Task) => void;
 }) {
+  useEscapeToClose(onClose);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [assigneeId, setAssigneeId] = useState<string>("");
@@ -107,18 +110,11 @@ export function NewTaskModal({
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
               Felelős
             </label>
-            <select
+            <AssigneePicker
+              members={members}
               value={assigneeId}
-              onChange={(e) => setAssigneeId(e.target.value)}
-              className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-surface focus:ring-2 focus:ring-brand-100"
-            >
-              <option value="">Nincs hozzárendelve</option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.nickname || m.email}
-                </option>
-              ))}
-            </select>
+              onChange={setAssigneeId}
+            />
           </div>
 
           {tags.length > 0 && (

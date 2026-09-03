@@ -78,6 +78,8 @@ export interface Task {
   assignee_avatar: string | null;
   position: number;
   created_by: number | null;
+  creator_nickname: string | null;
+  creator_email: string | null;
   created_at: string;
   updated_at: string;
   tags: Tag[];

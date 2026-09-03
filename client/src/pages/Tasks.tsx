@@ -334,11 +334,12 @@ export default function Tasks() {
         ) : tab === "board" ? (
           <DndContext
             sensors={sensors}
+            autoScroll={{ threshold: { x: 0.2, y: 0.25 }, acceleration: 20 }}
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
           >
-            <div className="flex h-full snap-x snap-mandatory gap-4 sm:gap-5">
+            <div className="flex snap-x snap-mandatory gap-4 sm:gap-5">
               {columns.map((col) => (
                 <TaskColumn
                   key={col.key}

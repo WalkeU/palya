@@ -4,6 +4,7 @@ import { STAGES } from "../types";
 import { api } from "../api/client";
 import { ScalePicker } from "./ScalePicker";
 import { CommentList } from "./CommentList";
+import { useEscapeToClose } from "../hooks/useEscapeToClose";
 
 export function CustomerDetailPanel({
   customer,
@@ -16,6 +17,7 @@ export function CustomerDetailPanel({
   onUpdated: (c: Customer) => void;
   onDeleted: (id: number) => void;
 }) {
+  useEscapeToClose(onClose);
   const [form, setForm] = useState({
     name: customer.name || "",
     business: customer.business || "",

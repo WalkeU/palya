@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { api, ApiError } from "../api/client";
+import { useEscapeToClose } from "../hooks/useEscapeToClose";
 
 interface UserRow {
   id: number;
@@ -21,6 +22,7 @@ export function UsersManagement() {
     isReset: boolean;
   } | null>(null);
   const [resettingId, setResettingId] = useState<number | null>(null);
+  useEscapeToClose(() => setReveal(null));
 
   function load() {
     api<{ users: UserRow[] }>("/api/users").then((d) => setUsers(d.users));

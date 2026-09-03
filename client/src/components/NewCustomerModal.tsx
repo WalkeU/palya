@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import type { Customer, Stage } from "../types";
 import { STAGES } from "../types";
 import { api } from "../api/client";
+import { useEscapeToClose } from "../hooks/useEscapeToClose";
 
 export function NewCustomerModal({
   onClose,
@@ -10,6 +11,7 @@ export function NewCustomerModal({
   onClose: () => void;
   onCreated: (c: Customer) => void;
 }) {
+  useEscapeToClose(onClose);
   const [name, setName] = useState("");
   const [business, setBusiness] = useState("");
   const [phone, setPhone] = useState("");

@@ -2,11 +2,23 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Avatar } from "./Avatar";
 
-function NavLink({ to, label, active }: { to: string; label: string; active: boolean }) {
+function NavLink({
+  to,
+  label,
+  active,
+  compact,
+}: {
+  to: string;
+  label: string;
+  active: boolean;
+  compact?: boolean;
+}) {
   return (
     <Link
       to={to}
-      className="rounded-lg px-3 py-2 text-sm font-medium transition"
+      className={`shrink-0 rounded-lg text-sm font-medium transition ${
+        compact ? "px-2.5 py-1.5" : "px-3 py-2"
+      }`}
       style={{
         color: active ? "rgb(var(--ink-950))" : "rgb(var(--ink-500))",
         backgroundColor: active ? "rgb(var(--ink-100))" : "transparent",
@@ -83,20 +95,23 @@ export function TopBar({ onNewCustomer }: { onNewCustomer?: () => void }) {
           </div>
         </div>
 
-        {/* Row 2: mobile only - nav links + the "new item" action. */}
-        <div className="flex items-center gap-1 sm:hidden">
-          <NavLink to="/" label="Ügyfelek" active={location.pathname === "/"} />
+        {/* Row 2: mobile only - nav links + the "new item" action. Scrolls
+            horizontally as a fallback rather than ever clipping a control,
+            though at typical phone widths it all fits without scrolling. */}
+        <div className="-mx-4 flex items-center gap-1 overflow-x-auto px-4 sm:hidden">
+          <NavLink to="/" label="Ügyfelek" active={location.pathname === "/"} compact />
           <NavLink
             to="/feladatok"
             label="Feladatok"
             active={location.pathname === "/feladatok"}
+            compact
           />
           {location.pathname === "/" && onNewCustomer && (
             <button
               onClick={onNewCustomer}
-              className="ml-auto rounded-lg bg-night px-3 py-1.5 text-xs font-medium text-white transition hover:bg-brand-600"
+              className="ml-auto shrink-0 rounded-lg bg-night px-3 py-1.5 text-xs font-medium text-white transition hover:bg-brand-600"
             >
-              + Új ügyfél
+              + Ügyfél
             </button>
           )}
         </div>
