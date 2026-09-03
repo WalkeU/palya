@@ -4,6 +4,7 @@ import { TASK_STAGES } from "../types";
 import { api } from "../api/client";
 import { TagChip } from "./TagChip";
 import { AssigneePicker } from "./AssigneePicker";
+import { Avatar } from "./Avatar";
 import { useEscapeToClose } from "../hooks/useEscapeToClose";
 
 function formatDateTime(iso: string): string {
@@ -42,13 +43,11 @@ export function TaskDetailPanel({
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [allTags, setAllTags] = useState<Tag[]>([]);
-  const [showMeta, setShowMeta] = useState(false);
 
   useEffect(() => {
     setForm({ title: task.title, description: task.description || "" });
     setStage(task.stage);
     setAssigneeId(task.assignee_id ? String(task.assignee_id) : "");
-    setShowMeta(false);
   }, [task.id]);
 
   useEffect(() => {
@@ -257,26 +256,25 @@ export function TaskDetailPanel({
         </div>
 
         <div className="border-t border-ink-100 bg-surface px-5 py-3">
-          <div className="mb-2 flex items-center justify-between">
-            <button
-              onClick={() => setShowMeta((v) => !v)}
-              className="text-xs font-medium text-ink-500 transition hover:text-ink-900"
-            >
-              {showMeta ? "Létrehozás elrejtése" : "Ki és mikor hozta létre?"}
-            </button>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <Avatar
+                avatar={task.creator_avatar}
+                name={task.creator_nickname || task.creator_email}
+                size={20}
+              />
+              <span className="truncate text-xs text-ink-500">
+                {task.creator_nickname || task.creator_email || "Ismeretlen"} ·{" "}
+                {formatDateTime(task.created_at)}
+              </span>
+            </div>
             <button
               onClick={handleDelete}
-              className="text-xs font-medium text-ink-500 transition hover:text-scale-1"
+              className="shrink-0 text-xs font-medium text-ink-500 transition hover:text-scale-1"
             >
               Feladat törlése
             </button>
           </div>
-          {showMeta && (
-            <p className="text-xs text-ink-500 animate-fade-in">
-              {task.creator_nickname || task.creator_email || "Ismeretlen"} hozta
-              létre: {formatDateTime(task.created_at)}
-            </p>
-          )}
         </div>
       </aside>
     </>

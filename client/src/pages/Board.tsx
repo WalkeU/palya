@@ -9,9 +9,13 @@ import {
   type DragOverEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { arrayMove } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  arrayMove,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import type { Customer, Stage } from "../types";
-import { STAGES } from "../types";
+import { CLOSED_REASONS, STAGES } from "../types";
 import { api } from "../api/client";
 import { TopBar } from "../components/TopBar";
 import { KanbanColumn } from "../components/KanbanColumn";
@@ -21,9 +25,12 @@ import { NewCustomerModal } from "../components/NewCustomerModal";
 
 const STAGE_KEYS = new Set(STAGES.map((s) => s.key));
 
+type Tab = "board" | "closed";
+
 export default function Board() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<Tab>("board");
   const [activeId, setActiveId] = useState<number | null>(null);
   const [selected, setSelected] = useState<Customer | null>(null);
   const [creating, setCreating] = useState(false);
@@ -39,15 +46,24 @@ export default function Board() {
     });
   }, []);
 
+  const activeCustomers = useMemo(
+    () => customers.filter((c) => !c.closed_reason),
+    [customers]
+  );
+  const closedCustomers = useMemo(
+    () => customers.filter((c) => c.closed_reason).sort((a, b) => b.id - a.id),
+    [customers]
+  );
+
   const columns = useMemo(
     () =>
       STAGES.map((s) => ({
         ...s,
-        items: customers
+        items: activeCustomers
           .filter((c) => c.stage === s.key)
           .sort((a, b) => a.position - b.position),
       })),
-    [customers]
+    [activeCustomers]
   );
 
   const activeCustomer = customers.find((c) => c.id === activeId) || null;
@@ -119,11 +135,68 @@ export default function Board() {
     <div className="flex h-screen flex-col">
       <TopBar onNewCustomer={() => setCreating(true)} />
 
+      <div className="border-b border-ink-100 bg-surface px-3 sm:px-6">
+        <div className="mx-auto flex max-w-[1400px] gap-1">
+          {[
+            { key: "board" as Tab, label: "Tábla" },
+            {
+              key: "closed" as Tab,
+              label: `Lezárva${closedCustomers.length ? ` (${closedCustomers.length})` : ""}`,
+            },
+          ].map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className="border-b-2 px-3 py-3 text-sm font-medium transition"
+              style={{
+                borderColor: tab === t.key ? "#3a8a74" : "transparent",
+                color: tab === t.key ? "rgb(var(--ink-950))" : "rgb(var(--ink-500))",
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <main className="flex-1 overflow-x-auto overflow-y-auto px-3 py-4 sm:px-6 sm:py-5">
         {loading ? (
           <div className="flex h-full items-center justify-center text-sm text-ink-500">
             Betöltés…
           </div>
+        ) : tab === "closed" ? (
+          closedCustomers.length === 0 ? (
+            <div className="flex items-center justify-center rounded-2xl border border-dashed border-ink-100 py-12 text-center text-xs text-ink-300">
+              Nincs lezárt ügyfél
+            </div>
+          ) : (
+            <DndContext sensors={sensors}>
+              <SortableContext
+                items={closedCustomers.map((c) => c.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="mx-auto flex max-w-xl flex-col gap-2.5">
+                  {closedCustomers.map((c) => (
+                    <div key={c.id} className="relative">
+                      <span
+                        className="absolute right-3.5 top-3.5 z-10 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                        style={{
+                          color: CLOSED_REASONS.find((r) => r.key === c.closed_reason)
+                            ?.accent,
+                          backgroundColor: `${
+                            CLOSED_REASONS.find((r) => r.key === c.closed_reason)?.accent
+                          }1a`,
+                        }}
+                      >
+                        {CLOSED_REASONS.find((r) => r.key === c.closed_reason)?.label}
+                      </span>
+                      <CustomerCard customer={c} onOpen={() => setSelected(c)} />
+                    </div>
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )
         ) : (
           <DndContext
             sensors={sensors}

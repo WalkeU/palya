@@ -132,3 +132,12 @@ const userColumns = db.prepare("PRAGMA table_info(users)").all() as ColumnInfo[]
 if (!userColumns.some((c) => c.name === "avatar")) {
   db.exec("ALTER TABLE users ADD COLUMN avatar TEXT");
 }
+
+// Migration: `closed_reason` lets a customer be taken off the active board
+// (not interested / deal fell through) without deleting their history.
+customerColumns = db.prepare("PRAGMA table_info(customers)").all() as ColumnInfo[];
+if (!customerColumns.some((c) => c.name === "closed_reason")) {
+  db.exec(
+    "ALTER TABLE customers ADD COLUMN closed_reason TEXT CHECK (closed_reason IN ('not_interested', 'failed'))"
+  );
+}

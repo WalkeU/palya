@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
-import type { Comment, Customer, Stage } from "../types";
-import { STAGES } from "../types";
+import type { ClosedReason, Comment, Customer, Stage } from "../types";
+import { CLOSED_REASONS, STAGES } from "../types";
 import { api } from "../api/client";
 import { ScalePicker } from "./ScalePicker";
 import { CommentList } from "./CommentList";
@@ -91,6 +91,10 @@ export function CustomerDetailPanel({
     persist({ stage: next });
   }
 
+  function handleClosedReasonChange(reason: ClosedReason | null) {
+    persist({ closed_reason: reason });
+  }
+
   async function handleSubmitComment(e: FormEvent) {
     e.preventDefault();
     if (!newComment.trim()) return;
@@ -167,6 +171,35 @@ export function CustomerDetailPanel({
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-5">
+          {customer.closed_reason && (
+            <div
+              className="mb-5 flex items-center justify-between gap-3 rounded-lg border px-3.5 py-2.5"
+              style={{
+                borderColor:
+                  CLOSED_REASONS.find((r) => r.key === customer.closed_reason)?.accent,
+                backgroundColor: `${
+                  CLOSED_REASONS.find((r) => r.key === customer.closed_reason)?.accent
+                }14`,
+              }}
+            >
+              <span
+                className="text-sm font-medium"
+                style={{
+                  color: CLOSED_REASONS.find((r) => r.key === customer.closed_reason)
+                    ?.accent,
+                }}
+              >
+                {CLOSED_REASONS.find((r) => r.key === customer.closed_reason)?.label}
+              </span>
+              <button
+                onClick={() => handleClosedReasonChange(null)}
+                className="shrink-0 rounded-md bg-surface px-2.5 py-1 text-xs font-medium text-ink-700 shadow-sm transition hover:text-ink-950"
+              >
+                Visszaállítás aktívvá
+              </button>
+            </div>
+          )}
+
           <section className="mb-5">
             <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
               Fázis
@@ -265,7 +298,7 @@ export function CustomerDetailPanel({
               Kommentek
             </span>
             <CommentList comments={comments} />
-            <form onSubmit={handleSubmitComment} className="mt-3 flex gap-2">
+            <form onSubmit={handleSubmitComment} className="mt-3 flex items-center gap-2">
               <input
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
@@ -275,21 +308,48 @@ export function CustomerDetailPanel({
               <button
                 type="submit"
                 disabled={postingComment || !newComment.trim()}
-                className="rounded-lg bg-night px-3.5 py-2 text-sm font-medium text-white transition hover:bg-brand-600 disabled:opacity-50"
+                aria-label="Küldés"
+                title="Küldés"
+                className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg bg-night text-white transition hover:bg-brand-600 disabled:opacity-50"
               >
-                Küldés
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M4 12h16M13 5l7 7-7 7"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </button>
             </form>
           </section>
         </div>
 
         <div className="border-t border-ink-100 bg-surface px-5 py-3">
-          <button
-            onClick={handleDelete}
-            className="text-xs font-medium text-ink-500 transition hover:text-scale-1"
-          >
-            Ügyfél törlése
-          </button>
+          <div className="flex items-center justify-between gap-2">
+            {!customer.closed_reason ? (
+              <div className="flex gap-1.5">
+                {CLOSED_REASONS.map((r) => (
+                  <button
+                    key={r.key}
+                    onClick={() => handleClosedReasonChange(r.key)}
+                    className="rounded-md border border-ink-100 px-2.5 py-1 text-xs font-medium text-ink-500 transition hover:border-ink-300 hover:text-ink-900"
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <span />
+            )}
+            <button
+              onClick={handleDelete}
+              className="shrink-0 text-xs font-medium text-ink-500 transition hover:text-scale-1"
+            >
+              Ügyfél törlése
+            </button>
+          </div>
         </div>
       </aside>
     </>

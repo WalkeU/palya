@@ -314,7 +314,7 @@ export default function Tasks() {
           />
           {tags.length > 0 && (
             <>
-              <div className="hidden h-5 w-px bg-ink-100 sm:block" />
+              <div className="hidden h-6 w-px bg-ink-300 sm:block" />
               <TagFilterBar
                 tags={tags}
                 selectedIds={selectedTagIds}

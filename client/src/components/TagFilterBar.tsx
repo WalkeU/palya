@@ -32,7 +32,7 @@ export function TagFilterBar({
           <button
             key={tag.id}
             onClick={() => onToggle(tag.id)}
-            className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium leading-none transition"
+            className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium leading-none transition"
             style={{
               borderColor: active ? tag.color : "rgb(var(--ink-100))",
               backgroundColor: active ? `${tag.color}1f` : "rgb(var(--surface))",

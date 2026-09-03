@@ -1,4 +1,5 @@
 export type Stage = "potential" | "discussion" | "building" | "done";
+export type ClosedReason = "not_interested" | "failed";
 
 export interface User {
   id: number;
@@ -20,6 +21,7 @@ export interface Customer {
   priority: number | null;
   motivation: number | null;
   position: number;
+  closed_reason: ClosedReason | null;
   created_by: number | null;
   created_at: string;
   updated_at: string;
@@ -41,6 +43,11 @@ export const STAGES: { key: Stage; label: string; accent: string }[] = [
   { key: "discussion", label: "Egyeztetés", accent: "#4d7ea8" },
   { key: "building", label: "Kiépítés alatt", accent: "#7c6bb0" },
   { key: "done", label: "Kész", accent: "#3a8a74" },
+];
+
+export const CLOSED_REASONS: { key: ClosedReason; label: string; accent: string }[] = [
+  { key: "not_interested", label: "Nem érdekli", accent: "#9a8a4a" },
+  { key: "failed", label: "Meghiúsult", accent: "#c85a4a" },
 ];
 
 export type TaskStage =
@@ -80,6 +87,7 @@ export interface Task {
   created_by: number | null;
   creator_nickname: string | null;
   creator_email: string | null;
+  creator_avatar: string | null;
   created_at: string;
   updated_at: string;
   tags: Tag[];

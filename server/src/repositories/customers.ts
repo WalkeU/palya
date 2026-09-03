@@ -1,6 +1,7 @@
 import { db } from "../db";
 
 export type Stage = "potential" | "discussion" | "building" | "done";
+export type ClosedReason = "not_interested" | "failed";
 
 export interface Customer {
   id: number;
@@ -13,6 +14,7 @@ export interface Customer {
   priority: number | null;
   motivation: number | null;
   position: number;
+  closed_reason: ClosedReason | null;
   created_by: number | null;
   created_at: string;
   updated_at: string;
@@ -40,6 +42,7 @@ export interface CustomerUpdateInput {
   priority?: number | null;
   motivation?: number | null;
   position?: number;
+  closed_reason?: ClosedReason | null;
 }
 
 export const customersRepo = {
@@ -110,13 +113,17 @@ export const customersRepo = {
           ? input.motivation
           : existing.motivation,
       position: input.position !== undefined ? input.position : existing.position,
+      closed_reason:
+        input.closed_reason !== undefined
+          ? input.closed_reason
+          : existing.closed_reason,
     };
 
     db.prepare(
       `UPDATE customers SET
         name = @name, business = @business, phone = @phone, email = @email, note = @note,
         stage = @stage, priority = @priority, motivation = @motivation,
-        position = @position, updated_at = datetime('now')
+        position = @position, closed_reason = @closed_reason, updated_at = datetime('now')
        WHERE id = @id`
     ).run({ ...merged, id });
 
