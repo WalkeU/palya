@@ -6,6 +6,7 @@ import {
   updateCustomerSchema,
   reorderSchema,
   createCommentSchema,
+  nameOrBusinessRefine,
 } from "../utils/validation";
 import { requireAuth } from "../middleware/auth";
 
@@ -48,8 +49,17 @@ customersRouter.patch("/:id", (req, res) => {
       .status(400)
       .json({ error: "invalid_input", details: parsed.error.flatten() });
   }
+  const existing = customersRepo.findById(id);
+  if (!existing) return res.status(404).json({ error: "not_found" });
+
+  const nextName = parsed.data.name !== undefined ? parsed.data.name : existing.name;
+  const nextBusiness =
+    parsed.data.business !== undefined ? parsed.data.business : existing.business;
+  if (!nameOrBusinessRefine({ name: nextName, business: nextBusiness })) {
+    return res.status(400).json({ error: "invalid_input" });
+  }
+
   const customer = customersRepo.update(id, parsed.data);
-  if (!customer) return res.status(404).json({ error: "not_found" });
   res.json({ customer });
 });
 

@@ -10,7 +10,8 @@ export interface User {
 
 export interface Customer {
   id: number;
-  name: string;
+  name: string | null;
+  business: string | null;
   phone: string | null;
   email: string | null;
   note: string | null;

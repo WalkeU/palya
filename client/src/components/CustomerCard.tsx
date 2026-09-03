@@ -29,9 +29,14 @@ export function CustomerCard({
       className="group cursor-grab rounded-xl border border-ink-100 bg-white p-3.5 shadow-card transition hover:-translate-y-0.5 hover:shadow-card-hover active:cursor-grabbing"
     >
       <div className="mb-1.5 flex items-start justify-between gap-2">
-        <h3 className="text-sm font-semibold leading-snug text-ink-950">
-          {customer.name}
-        </h3>
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-semibold leading-snug text-ink-950">
+            {customer.name || customer.business}
+          </h3>
+          {customer.name && customer.business && (
+            <p className="truncate text-xs text-ink-500">{customer.business}</p>
+          )}
+        </div>
         {customer.stage === "potential" && (
           <ScaleBadge value={customer.priority} label="Prioritás" />
         )}

@@ -4,7 +4,8 @@ export type Stage = "potential" | "discussion" | "building" | "done";
 
 export interface Customer {
   id: number;
-  name: string;
+  name: string | null;
+  business: string | null;
   phone: string | null;
   email: string | null;
   note: string | null;
@@ -19,7 +20,8 @@ export interface Customer {
 }
 
 export interface CustomerInput {
-  name: string;
+  name?: string | null;
+  business?: string | null;
   phone?: string | null;
   email?: string | null;
   note?: string | null;
@@ -29,7 +31,8 @@ export interface CustomerInput {
 }
 
 export interface CustomerUpdateInput {
-  name?: string;
+  name?: string | null;
+  business?: string | null;
   phone?: string | null;
   email?: string | null;
   note?: string | null;
@@ -71,11 +74,12 @@ export const customersRepo = {
     const position = this.nextPosition(input.stage);
     const info = db
       .prepare(
-        `INSERT INTO customers (name, phone, email, note, stage, priority, motivation, position, created_by)
-         VALUES (@name, @phone, @email, @note, @stage, @priority, @motivation, @position, @createdBy)`
+        `INSERT INTO customers (name, business, phone, email, note, stage, priority, motivation, position, created_by)
+         VALUES (@name, @business, @phone, @email, @note, @stage, @priority, @motivation, @position, @createdBy)`
       )
       .run({
-        name: input.name,
+        name: input.name ?? null,
+        business: input.business ?? null,
         phone: input.phone ?? null,
         email: input.email ?? null,
         note: input.note ?? null,
@@ -93,7 +97,8 @@ export const customersRepo = {
     if (!existing) return undefined;
 
     const merged = {
-      name: input.name ?? existing.name,
+      name: input.name !== undefined ? input.name : existing.name,
+      business: input.business !== undefined ? input.business : existing.business,
       phone: input.phone !== undefined ? input.phone : existing.phone,
       email: input.email !== undefined ? input.email : existing.email,
       note: input.note !== undefined ? input.note : existing.note,
@@ -109,7 +114,7 @@ export const customersRepo = {
 
     db.prepare(
       `UPDATE customers SET
-        name = @name, phone = @phone, email = @email, note = @note,
+        name = @name, business = @business, phone = @phone, email = @email, note = @note,
         stage = @stage, priority = @priority, motivation = @motivation,
         position = @position, updated_at = datetime('now')
        WHERE id = @id`

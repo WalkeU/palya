@@ -17,7 +17,8 @@ export function CustomerDetailPanel({
   onDeleted: (id: number) => void;
 }) {
   const [form, setForm] = useState({
-    name: customer.name,
+    name: customer.name || "",
+    business: customer.business || "",
     phone: customer.phone || "",
     email: customer.email || "",
     note: customer.note || "",
@@ -27,6 +28,7 @@ export function CustomerDetailPanel({
   const [motivation, setMotivation] = useState<number | null>(customer.motivation);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [headerError, setHeaderError] = useState<string | null>(null);
 
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -34,7 +36,8 @@ export function CustomerDetailPanel({
 
   useEffect(() => {
     setForm({
-      name: customer.name,
+      name: customer.name || "",
+      business: customer.business || "",
       phone: customer.phone || "",
       email: customer.email || "",
       note: customer.note || "",
@@ -65,8 +68,16 @@ export function CustomerDetailPanel({
   }
 
   function handleFieldBlur() {
+    const nextName = form.name.trim();
+    const nextBusiness = form.business.trim();
+    if (!nextName && !nextBusiness) {
+      setHeaderError("A név vagy az üzlet megadása kötelező.");
+      return;
+    }
+    setHeaderError(null);
     persist({
-      name: form.name.trim(),
+      name: nextName || null,
+      business: nextBusiness || null,
       phone: form.phone.trim() || null,
       email: form.email.trim() || null,
       note: form.note.trim() || null,
@@ -96,7 +107,8 @@ export function CustomerDetailPanel({
   }
 
   async function handleDelete() {
-    if (!window.confirm(`Biztosan törlöd "${customer.name}" ügyfelet?`)) return;
+    const label = customer.name || customer.business || "az ügyfelet";
+    if (!window.confirm(`Biztosan törlöd "${label}" ügyfelet?`)) return;
     await api(`/api/customers/${customer.id}`, { method: "DELETE" });
     onDeleted(customer.id);
   }
@@ -109,15 +121,31 @@ export function CustomerDetailPanel({
       />
       <aside className="fixed right-0 top-0 z-40 flex h-full w-full max-w-md animate-panel-in flex-col border-l border-ink-100 bg-ink-50 shadow-panel">
         <div className="flex items-center justify-between border-b border-ink-100 bg-white px-5 py-4">
-          <div>
+          <div className="min-w-0 flex-1">
             <input
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               onBlur={handleFieldBlur}
+              placeholder="Név"
               className="w-full rounded-md border border-transparent bg-transparent text-lg font-semibold text-ink-950 outline-none transition hover:border-ink-100 focus:border-brand-400 focus:bg-ink-50 focus:px-2 focus:py-1"
             />
+            <input
+              value={form.business}
+              onChange={(e) => setForm((f) => ({ ...f, business: e.target.value }))}
+              onBlur={handleFieldBlur}
+              placeholder="Üzlet"
+              className="w-full rounded-md border border-transparent bg-transparent text-sm text-ink-500 outline-none transition hover:border-ink-100 focus:border-brand-400 focus:bg-ink-50 focus:px-2 focus:py-0.5"
+            />
             <p className="mt-0.5 text-xs text-ink-500">
-              {saving ? "Mentés…" : savedAt ? "Elmentve" : " "}
+              {headerError ? (
+                <span className="text-scale-1">{headerError}</span>
+              ) : saving ? (
+                "Mentés…"
+              ) : savedAt ? (
+                "Elmentve"
+              ) : (
+                " "
+              )}
             </p>
           </div>
           <button

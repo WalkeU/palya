@@ -11,6 +11,7 @@ export function NewCustomerModal({
   onCreated: (c: Customer) => void;
 }) {
   const [name, setName] = useState("");
+  const [business, setBusiness] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [note, setNote] = useState("");
@@ -20,8 +21,8 @@ export function NewCustomerModal({
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!name.trim()) {
-      setError("A név megadása kötelező.");
+    if (!name.trim() && !business.trim()) {
+      setError("A név vagy az üzlet megadása kötelező.");
       return;
     }
     setSubmitting(true);
@@ -30,7 +31,8 @@ export function NewCustomerModal({
       const data = await api<{ customer: Customer }>("/api/customers", {
         method: "POST",
         body: {
-          name: name.trim(),
+          name: name.trim() || null,
+          business: business.trim() || null,
           phone: phone.trim() || null,
           email: email.trim() || null,
           note: note.trim() || null,
@@ -62,16 +64,30 @@ export function NewCustomerModal({
 
           <div className="mb-3.5">
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
-              Név *
+              Név
             </label>
             <input
               autoFocus
-              required
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-100"
               placeholder="Ügyfél neve"
             />
+          </div>
+
+          <div className="mb-3.5">
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
+              Üzlet
+            </label>
+            <input
+              value={business}
+              onChange={(e) => setBusiness(e.target.value)}
+              className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-100"
+              placeholder="Cég / üzlet neve"
+            />
+            <p className="mt-1 text-[11px] text-ink-500">
+              A név vagy az üzlet megadása kötelező.
+            </p>
           </div>
 
           <div className="mb-3.5 grid grid-cols-2 gap-3">

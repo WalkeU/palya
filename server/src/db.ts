@@ -37,7 +37,8 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS customers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
+    name TEXT,
+    business TEXT,
     phone TEXT,
     email TEXT,
     note TEXT,
@@ -61,3 +62,41 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_customers_stage ON customers(stage);
   CREATE INDEX IF NOT EXISTS idx_comments_customer ON comments(customer_id);
 `);
+
+// Migration: `business` column and `name` becoming nullable were added
+// after the initial release - existing databases need catching up.
+type ColumnInfo = { name: string; notnull: number };
+let customerColumns = db
+  .prepare("PRAGMA table_info(customers)")
+  .all() as ColumnInfo[];
+
+if (!customerColumns.some((c) => c.name === "business")) {
+  db.exec("ALTER TABLE customers ADD COLUMN business TEXT");
+  customerColumns = db.prepare("PRAGMA table_info(customers)").all() as ColumnInfo[];
+}
+
+const nameColumn = customerColumns.find((c) => c.name === "name");
+if (nameColumn?.notnull) {
+  // SQLite can't drop a NOT NULL constraint in place - rebuild the table.
+  db.exec(`
+    CREATE TABLE customers_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      business TEXT,
+      phone TEXT,
+      email TEXT,
+      note TEXT,
+      stage TEXT NOT NULL CHECK (stage IN ('potential', 'discussion', 'building', 'done')) DEFAULT 'potential',
+      priority INTEGER CHECK (priority BETWEEN 1 AND 5),
+      motivation INTEGER CHECK (motivation BETWEEN 1 AND 5),
+      position INTEGER NOT NULL DEFAULT 0,
+      created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT INTO customers_new SELECT id, name, business, phone, email, note, stage, priority, motivation, position, created_by, created_at, updated_at FROM customers;
+    DROP TABLE customers;
+    ALTER TABLE customers_new RENAME TO customers;
+    CREATE INDEX IF NOT EXISTS idx_customers_stage ON customers(stage);
+  `);
+}
