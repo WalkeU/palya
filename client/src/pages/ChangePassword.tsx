@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { api, ApiError } from "../api/client";
+import { PasswordInput } from "../components/PasswordInput";
 import type { User } from "../types";
 
 export default function ChangePassword() {
@@ -81,13 +82,11 @@ export default function ChangePassword() {
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
               Új jelszó
             </label>
-            <input
-              type="password"
+            <PasswordInput
               required
               minLength={10}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-100"
               placeholder="Min. 10 karakter"
             />
           </div>
@@ -95,13 +94,11 @@ export default function ChangePassword() {
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
               Új jelszó megerősítése
             </label>
-            <input
-              type="password"
+            <PasswordInput
               required
               minLength={10}
               value={newPasswordConfirm}
               onChange={(e) => setNewPasswordConfirm(e.target.value)}
-              className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-100"
               placeholder="Ismét az új jelszó"
             />
           </div>

@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../api/client";
+import { PasswordInput } from "../components/PasswordInput";
 
 export default function Login() {
   const { login } = useAuth();
@@ -63,12 +64,10 @@ export default function Login() {
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
               Jelszó
             </label>
-            <input
-              type="password"
+            <PasswordInput
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-100"
               placeholder="••••••••"
             />
           </div>
