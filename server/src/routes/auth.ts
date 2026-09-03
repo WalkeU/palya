@@ -1,7 +1,11 @@
 import { Router } from "express";
 import { usersRepo } from "../repositories/users";
 import { hashPassword, verifyPassword } from "../utils/password";
-import { loginSchema, changePasswordSchema } from "../utils/validation";
+import {
+  loginSchema,
+  changePasswordSchema,
+  updateProfileSchema,
+} from "../utils/validation";
 import { requireAuth } from "../middleware/auth";
 import { loginRateLimiter, passwordChangeRateLimiter } from "../middleware/rateLimit";
 
@@ -13,6 +17,7 @@ function publicUser(user: {
   nickname: string | null;
   role: string;
   must_change_password: number;
+  avatar: string | null;
 }) {
   return {
     id: user.id,
@@ -20,6 +25,7 @@ function publicUser(user: {
     nickname: user.nickname,
     role: user.role,
     mustChangePassword: !!user.must_change_password,
+    avatar: user.avatar,
   };
 }
 
@@ -75,3 +81,16 @@ authRouter.post(
     res.json({ user: publicUser(updated) });
   }
 );
+
+authRouter.patch("/profile", requireAuth, (req, res) => {
+  const parsed = updateProfileSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ error: "invalid_input", details: parsed.error.flatten() });
+  }
+  const user = (req as any).user;
+  usersRepo.updateProfile(user.id, parsed.data.nickname, parsed.data.avatar ?? null);
+  const updated = usersRepo.findById(user.id)!;
+  res.json({ user: publicUser(updated) });
+});

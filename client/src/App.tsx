@@ -3,6 +3,7 @@ import { useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
 import ChangePassword from "./pages/ChangePassword";
 import Board from "./pages/Board";
+import Tasks from "./pages/Tasks";
 import Users from "./pages/Users";
 
 function LoadingScreen() {
@@ -37,6 +38,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Board />} />
+      <Route path="/feladatok" element={<Tasks />} />
       {user.role === "superadmin" && <Route path="/felhasznalok" element={<Users />} />}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

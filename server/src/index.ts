@@ -12,6 +12,8 @@ import { apiRateLimiter } from "./middleware/rateLimit";
 import { authRouter } from "./routes/auth";
 import { usersRouter } from "./routes/users";
 import { customersRouter } from "./routes/customers";
+import { tasksRouter } from "./routes/tasks";
+import { membersRouter } from "./routes/members";
 
 const DEV_SESSION_SECRET = "dev_secret_change_me";
 const sessionSecret = process.env.SESSION_SECRET || DEV_SESSION_SECRET;
@@ -44,7 +46,7 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: "200kb" }));
+app.use(express.json({ limit: "1mb" }));
 
 const sessionDb = new Database(path.join(__dirname, "..", "..", "data", "app.db"));
 
@@ -79,6 +81,8 @@ app.use("/api", (req, res, next) => verifyCsrfToken(req, res, next));
 app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/customers", customersRouter);
+app.use("/api/tasks", tasksRouter);
+app.use("/api/members", membersRouter);
 
 const clientDist = path.join(__dirname, "..", "..", "client-dist");
 app.use(express.static(clientDist));

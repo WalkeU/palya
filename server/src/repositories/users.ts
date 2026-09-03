@@ -9,7 +9,15 @@ export interface User {
   password_hash: string;
   role: Role;
   must_change_password: number;
+  avatar: string | null;
   created_at: string;
+}
+
+export interface Member {
+  id: number;
+  nickname: string | null;
+  email: string;
+  avatar: string | null;
 }
 
 export const usersRepo = {
@@ -28,9 +36,17 @@ export const usersRepo = {
   list(): Omit<User, "password_hash">[] {
     return db
       .prepare(
-        "SELECT id, email, nickname, role, must_change_password, created_at FROM users ORDER BY created_at ASC"
+        "SELECT id, email, nickname, role, must_change_password, avatar, created_at FROM users ORDER BY created_at ASC"
       )
       .all() as Omit<User, "password_hash">[];
+  },
+
+  listMembers(): Member[] {
+    return db
+      .prepare(
+        "SELECT id, nickname, email, avatar FROM users ORDER BY COALESCE(nickname, email) ASC"
+      )
+      .all() as Member[];
   },
 
   create(email: string, passwordHash: string, role: Role): User {
@@ -53,5 +69,13 @@ export const usersRepo = {
     db.prepare(
       `UPDATE users SET password_hash = ?, must_change_password = 1 WHERE id = ?`
     ).run(passwordHash, id);
+  },
+
+  updateProfile(id: number, nickname: string, avatar: string | null) {
+    db.prepare(`UPDATE users SET nickname = ?, avatar = ? WHERE id = ?`).run(
+      nickname,
+      avatar,
+      id
+    );
   },
 };

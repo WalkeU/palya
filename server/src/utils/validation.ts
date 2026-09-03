@@ -64,3 +64,42 @@ export const reorderSchema = z.object({
 export const createCommentSchema = z.object({
   text: z.string().trim().min(1, "A komment nem lehet üres").max(3000),
 });
+
+const taskStageEnum = z.enum([
+  "backlog",
+  "todo",
+  "in_progress",
+  "blocked",
+  "waiting_review",
+  "done",
+  "closed",
+]);
+
+export const createTaskSchema = z.object({
+  title: z.string().trim().min(1, "A cím megadása kötelező").max(200),
+  description: z.string().trim().max(5000).nullable().optional(),
+  stage: taskStageEnum.default("backlog"),
+  assignee_id: z.number().int().nullable().optional(),
+});
+
+export const updateTaskSchema = z.object({
+  title: z.string().trim().min(1).max(200).optional(),
+  description: z.string().trim().max(5000).nullable().optional(),
+  stage: taskStageEnum.optional(),
+  assignee_id: z.number().int().nullable().optional(),
+});
+
+export const taskReorderSchema = z.object({
+  stage: taskStageEnum,
+  orderedIds: z.array(z.number().int()),
+});
+
+export const updateProfileSchema = z.object({
+  nickname: z.string().trim().min(1, "A becenév megadása kötelező").max(40),
+  avatar: z
+    .string()
+    .max(400_000, "A kép túl nagy")
+    .regex(/^data:image\/(png|jpe?g|webp);base64,/, "Érvénytelen kép formátum")
+    .nullable()
+    .optional(),
+});

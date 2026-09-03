@@ -59,8 +59,21 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    stage TEXT NOT NULL CHECK (stage IN ('backlog', 'todo', 'in_progress', 'blocked', 'waiting_review', 'done', 'closed')) DEFAULT 'backlog',
+    assignee_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    position INTEGER NOT NULL DEFAULT 0,
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
   CREATE INDEX IF NOT EXISTS idx_customers_stage ON customers(stage);
   CREATE INDEX IF NOT EXISTS idx_comments_customer ON comments(customer_id);
+  CREATE INDEX IF NOT EXISTS idx_tasks_stage ON tasks(stage);
 `);
 
 // Migration: `business` column and `name` becoming nullable were added
@@ -99,4 +112,10 @@ if (nameColumn?.notnull) {
     ALTER TABLE customers_new RENAME TO customers;
     CREATE INDEX IF NOT EXISTS idx_customers_stage ON customers(stage);
   `);
+}
+
+// Migration: `avatar` column added to users after the initial release.
+const userColumns = db.prepare("PRAGMA table_info(users)").all() as ColumnInfo[];
+if (!userColumns.some((c) => c.name === "avatar")) {
+  db.exec("ALTER TABLE users ADD COLUMN avatar TEXT");
 }
