@@ -413,13 +413,13 @@ export default function Settings() {
     <div className="flex h-screen flex-col">
       <TopBar />
 
-      <div className="border-b border-ink-100 bg-surface px-6">
-        <div className="mx-auto flex max-w-[1400px] gap-1">
+      <div className="border-b border-ink-100 bg-surface px-3 sm:px-6">
+        <div className="mx-auto flex max-w-[1400px] gap-1 overflow-x-auto">
           {tabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className="border-b-2 px-3 py-3 text-sm font-medium transition"
+              className="whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition"
               style={{
                 borderColor: tab === t.key ? "#3a8a74" : "transparent",
                 color: tab === t.key ? "rgb(var(--ink-950))" : "rgb(var(--ink-500))",
@@ -431,7 +431,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <main className="flex-1 overflow-y-auto px-6 py-8">
+      <main className="flex-1 overflow-y-auto px-3 py-6 sm:px-6 sm:py-8">
         <div className="mx-auto max-w-2xl">
           {tab === "profil" && <ProfileTab />}
           {tab === "jelszo" && <PasswordTab />}

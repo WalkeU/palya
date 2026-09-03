@@ -30,7 +30,12 @@ seedSuperAdmin();
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-app.set("trust proxy", 1);
+// `true` trusts X-Forwarded-* from any hop count. Deployments here often sit
+// behind more than one proxy (e.g. Cloudflare in front of a local reverse
+// proxy) - trusting only a fixed number of hops silently breaks `secure:
+// "auto"` cookie resolution below whenever that count is off, which is a
+// likely cause of inconsistent session persistence on some clients/networks.
+app.set("trust proxy", true);
 
 app.use(
   helmet({
@@ -63,7 +68,15 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      sameSite: "strict",
+      // "lax" instead of "strict": a strict cookie is withheld on the
+      // first top-level navigation into the site from outside it (e.g.
+      // opening a bookmark/home-screen icon, or a link from another app) -
+      // iOS Safari in particular can end up making that first request
+      // with no session cookie, which looks like "got logged out on
+      // reload". CSRF protection here comes from the separate token in
+      // middleware/csrf.ts, not from cookie SameSite, so relaxing this is
+      // safe.
+      sameSite: "lax",
       // "auto": Secure attribute is set when the request is actually HTTPS
       // (directly, or via X-Forwarded-Proto since trust proxy is enabled).
       // A hardcoded `secure: true` would silently break sessions whenever

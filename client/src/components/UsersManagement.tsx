@@ -81,7 +81,7 @@ export function UsersManagement() {
 
       <form
         onSubmit={handleSubmit}
-        className="mb-8 flex items-end gap-2 rounded-2xl border border-ink-100 bg-surface p-4 shadow-card"
+        className="mb-8 flex flex-col items-stretch gap-2 rounded-2xl border border-ink-100 bg-surface p-4 shadow-card sm:flex-row sm:items-end"
       >
         <div className="flex-1">
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
@@ -111,48 +111,50 @@ export function UsersManagement() {
       )}
 
       <div className="overflow-hidden rounded-2xl border border-ink-100 bg-surface shadow-card">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-ink-100 text-left text-xs uppercase tracking-wide text-ink-500">
-              <th className="px-4 py-3 font-semibold">Email</th>
-              <th className="px-4 py-3 font-semibold">Becenév</th>
-              <th className="px-4 py-3 font-semibold">Szerepkör</th>
-              <th className="px-4 py-3 font-semibold">Állapot</th>
-              <th className="px-4 py-3 font-semibold"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id} className="border-b border-ink-100 last:border-0">
-                <td className="px-4 py-3 text-ink-900">{u.email}</td>
-                <td className="px-4 py-3 text-ink-700">{u.nickname || "—"}</td>
-                <td className="px-4 py-3 text-ink-700">
-                  {u.role === "superadmin" ? "Superadmin" : "Felhasználó"}
-                </td>
-                <td className="px-4 py-3">
-                  {u.must_change_password ? (
-                    <span className="rounded-full bg-scale-3/15 px-2 py-0.5 text-[11px] font-semibold text-scale-3">
-                      Jelszóváltás szükséges
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-scale-5/15 px-2 py-0.5 text-[11px] font-semibold text-scale-5">
-                      Aktív
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button
-                    onClick={() => handleResetPassword(u)}
-                    disabled={resettingId === u.id}
-                    className="text-xs font-medium text-ink-500 transition hover:text-ink-900 disabled:opacity-50"
-                  >
-                    {resettingId === u.id ? "Visszaállítás…" : "Jelszó visszaállítása"}
-                  </button>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-sm">
+            <thead>
+              <tr className="border-b border-ink-100 text-left text-xs uppercase tracking-wide text-ink-500">
+                <th className="px-4 py-3 font-semibold">Email</th>
+                <th className="px-4 py-3 font-semibold">Becenév</th>
+                <th className="px-4 py-3 font-semibold">Szerepkör</th>
+                <th className="px-4 py-3 font-semibold">Állapot</th>
+                <th className="px-4 py-3 font-semibold"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr key={u.id} className="border-b border-ink-100 last:border-0">
+                  <td className="px-4 py-3 text-ink-900">{u.email}</td>
+                  <td className="px-4 py-3 text-ink-700">{u.nickname || "–"}</td>
+                  <td className="px-4 py-3 text-ink-700">
+                    {u.role === "superadmin" ? "Superadmin" : "Felhasználó"}
+                  </td>
+                  <td className="px-4 py-3">
+                    {u.must_change_password ? (
+                      <span className="rounded-full bg-scale-3/15 px-2 py-0.5 text-[11px] font-semibold text-scale-3">
+                        Jelszóváltás szükséges
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-scale-5/15 px-2 py-0.5 text-[11px] font-semibold text-scale-5">
+                        Aktív
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={() => handleResetPassword(u)}
+                      disabled={resettingId === u.id}
+                      className="text-xs font-medium text-ink-500 transition hover:text-ink-900 disabled:opacity-50"
+                    >
+                      {resettingId === u.id ? "Visszaállítás…" : "Jelszó visszaállítása"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {reveal && (

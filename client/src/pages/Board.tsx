@@ -119,7 +119,7 @@ export default function Board() {
     <div className="flex h-screen flex-col">
       <TopBar onNewCustomer={() => setCreating(true)} />
 
-      <main className="flex-1 overflow-x-auto overflow-y-hidden px-6 py-5">
+      <main className="flex-1 overflow-x-auto overflow-y-hidden px-3 py-4 sm:px-6 sm:py-5">
         {loading ? (
           <div className="flex h-full items-center justify-center text-sm text-ink-500">
             Betöltés…
@@ -131,7 +131,7 @@ export default function Board() {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
           >
-            <div className="flex h-full gap-5">
+            <div className="flex h-full snap-x snap-mandatory gap-4 sm:gap-5">
               {columns.map((col) => (
                 <KanbanColumn
                   key={col.key}

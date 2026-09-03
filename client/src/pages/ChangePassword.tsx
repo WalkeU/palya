@@ -55,7 +55,7 @@ export default function ChangePassword() {
             Első belépés
           </h1>
           <p className="mt-1.5 text-sm text-ink-500">
-            {user?.email} — állíts be egy saját jelszót és becenevet a folytatáshoz.
+            {user?.email}. Állíts be egy saját jelszót és becenevet a folytatáshoz.
           </p>
         </div>
 

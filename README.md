@@ -1,4 +1,4 @@
-# Pálya — Ügyfélkövető
+# Pálya: Ügyfélkövető
 
 Kanban board ügyfelek nyomon követésére: **Potenciál → Egyeztetés → Kiépítés alatt → Kész**.
 
@@ -13,7 +13,7 @@ Az app a `.env`-ben megadott `PORT`-on érhető el.
 
 ## Seed jelszó megnézése
 
-Első indításkor a rendszer létrehozza a superadmin usert (a `.env`-ben megadott `SEED_ADMIN_EMAIL`-lel) és kiírja a generált jelszavát a logba — **csak ekkor, egyszer**:
+Első indításkor a rendszer létrehozza a superadmin usert (a `.env`-ben megadott `SEED_ADMIN_EMAIL`-lel) és kiírja a generált jelszavát a logba. **Csak ekkor, egyszer.**
 
 ```bash
 docker compose logs ugyfelkoveto | grep -A2 Jelszó
@@ -23,7 +23,7 @@ Ezzel a jelszóval kell először belépni, utána kötelező lecserélni.
 
 ## Adatok / mentés
 
-Az adatbázis egy Docker-kezelt named volume-ban van (`docker volume ls` → `..._data`), nem a projekt mappájában — ez host-független, mindenhol megbízhatóan írható. Mentéshez:
+Az adatbázis egy Docker-kezelt named volume-ban van (`docker volume ls` → `..._data`), nem a projekt mappájában, mert ez host-független és mindenhol megbízhatóan írható. Mentéshez:
 
 ```bash
 docker run --rm -v ugyfelkoveto_data:/data -v "$(pwd)":/backup alpine tar czf /backup/adatok.tar.gz -C /data .

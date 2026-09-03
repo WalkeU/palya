@@ -10,7 +10,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import type { Task, TaskStage, TeamMember } from "../types";
+import type { Tag, Task, TaskStage, TeamMember } from "../types";
 import { TASK_STAGES } from "../types";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -20,6 +20,7 @@ import { TaskCard } from "../components/TaskCard";
 import { TaskDetailPanel } from "../components/TaskDetailPanel";
 import { NewTaskModal } from "../components/NewTaskModal";
 import { PeopleFilterBar } from "../components/PeopleFilterBar";
+import { TagFilterBar } from "../components/TagFilterBar";
 
 const BOARD_STAGE_KEYS = new Set(TASK_STAGES.map((s) => s.key));
 
@@ -77,9 +78,11 @@ export default function Tasks() {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [members, setMembers] = useState<TeamMember[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("board");
   const [selectedPersonId, setSelectedPersonId] = useState<number | null>(null);
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set());
   const [activeId, setActiveId] = useState<number | null>(null);
   const [selected, setSelected] = useState<Task | null>(null);
   const [creating, setCreating] = useState(false);
@@ -92,9 +95,11 @@ export default function Tasks() {
     Promise.all([
       api<{ tasks: Task[] }>("/api/tasks"),
       api<{ members: TeamMember[] }>("/api/members"),
-    ]).then(([taskData, memberData]) => {
+      api<{ tags: Tag[] }>("/api/tags"),
+    ]).then(([taskData, memberData, tagData]) => {
       setTasks(taskData.tasks);
       setMembers(memberData.members);
+      setTags(tagData.tags);
       setLoading(false);
     });
   }, []);
@@ -136,11 +141,24 @@ export default function Tasks() {
 
   const visibleTasks = useMemo(
     () =>
-      selectedPersonId === null
-        ? tasks
-        : tasks.filter((t) => t.assignee_id === selectedPersonId),
-    [tasks, selectedPersonId]
+      tasks
+        .filter((t) => selectedPersonId === null || t.assignee_id === selectedPersonId)
+        .filter(
+          (t) =>
+            selectedTagIds.size === 0 ||
+            t.tags.some((tag) => selectedTagIds.has(tag.id))
+        ),
+    [tasks, selectedPersonId, selectedTagIds]
   );
+
+  function toggleTagFilter(id: number) {
+    setSelectedTagIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   const columns = useMemo(
     () =>
@@ -255,8 +273,8 @@ export default function Tasks() {
     <div className="flex h-screen flex-col">
       <TopBar />
 
-      <div className="border-b border-ink-100 bg-surface px-6">
-        <div className="mx-auto flex max-w-[1400px] items-center justify-between">
+      <div className="border-b border-ink-100 bg-surface px-3 sm:px-6">
+        <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-2">
           <div className="flex gap-1">
             {[
               { key: "board" as Tab, label: "Tábla" },
@@ -287,17 +305,28 @@ export default function Tasks() {
         </div>
       </div>
 
-      <div className="border-b border-ink-100 bg-ink-50/60 px-6 py-3">
-        <div className="mx-auto max-w-[1400px]">
+      <div className="border-b border-ink-100 bg-ink-50/60 px-3 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-5 gap-y-2">
           <PeopleFilterBar
             members={members}
             selectedId={selectedPersonId}
             onSelect={setSelectedPersonId}
           />
+          {tags.length > 0 && (
+            <>
+              <div className="hidden h-5 w-px bg-ink-100 sm:block" />
+              <TagFilterBar
+                tags={tags}
+                selectedIds={selectedTagIds}
+                onToggle={toggleTagFilter}
+                onClear={() => setSelectedTagIds(new Set())}
+              />
+            </>
+          )}
         </div>
       </div>
 
-      <main className="flex-1 overflow-x-auto overflow-y-auto px-6 py-5">
+      <main className="flex-1 overflow-x-auto overflow-y-auto px-3 py-4 sm:px-6 sm:py-5">
         {loading ? (
           <div className="flex h-full items-center justify-center text-sm text-ink-500">
             Betöltés…
@@ -309,7 +338,7 @@ export default function Tasks() {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
           >
-            <div className="flex h-full gap-5">
+            <div className="flex h-full snap-x snap-mandatory gap-4 sm:gap-5">
               {columns.map((col) => (
                 <TaskColumn
                   key={col.key}

@@ -141,7 +141,7 @@ export function NewTaskModal({
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
                 Fázis
               </label>
-              <div className="grid grid-cols-5 gap-1.5">
+              <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
                 {TASK_STAGES.map((s) => (
                   <button
                     key={s.key}

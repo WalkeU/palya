@@ -129,7 +129,7 @@ export function NewCustomerModal({
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
               Fázis
             </label>
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
               {STAGES.map((s) => (
                 <button
                   key={s.key}
