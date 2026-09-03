@@ -1,0 +1,91 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Public+Sans:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-ink-50 text-ink-900 antialiased;
+  font-family: "Public Sans", "Segoe UI", sans-serif;
+  background-image: radial-gradient(
+      circle at 12% 8%,
+      rgba(79, 168, 143, 0.05),
+      transparent 40%
+    ),
+    radial-gradient(circle at 85% 92%, rgba(217, 154, 61, 0.05), transparent 45%);
+  background-attachment: fixed;
+}
+
+.font-display {
+  font-family: "Fraunces", "Georgia", serif;
+}
+
+::selection {
+  background: rgba(58, 138, 116, 0.22);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c7cbd1 transparent;
+}
+*::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #c7cbd1;
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-rise-in {
+  animation: rise-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.animate-panel-in {
+  animation: panel-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.animate-fade-in {
+  animation: fade-in 0.18s ease-out both;
+}
