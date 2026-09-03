@@ -141,12 +141,12 @@ export function CustomerDetailPanel({
             <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
               Fázis
             </span>
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-4 gap-1.5">
               {STAGES.map((s) => (
                 <button
                   key={s.key}
                   onClick={() => handleStageChange(s.key)}
-                  className="flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-medium transition"
+                  className="flex flex-col items-center justify-center gap-1 rounded-lg border px-1.5 py-2.5 text-center text-[11px] font-medium leading-tight transition"
                   style={{
                     borderColor: stage === s.key ? s.accent : "#eef0f3",
                     backgroundColor: stage === s.key ? `${s.accent}1a` : "white",
