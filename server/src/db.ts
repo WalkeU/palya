@@ -3,8 +3,21 @@ import fs from "node:fs";
 import path from "node:path";
 
 const dataDir = path.join(__dirname, "..", "..", "data");
-if (!fs.existsSync(dataDir)) {
+
+try {
   fs.mkdirSync(dataDir, { recursive: true });
+  const probeFile = path.join(dataDir, ".write-test");
+  fs.writeFileSync(probeFile, "ok");
+  fs.unlinkSync(probeFile);
+} catch (err) {
+  console.error("=".repeat(60));
+  console.error(` Nem lehet írni az adatkönyvtárba: ${dataDir}`);
+  console.error(` Ok: ${(err as NodeJS.ErrnoException).code} - ${(err as Error).message}`);
+  console.error(
+    " Ez a Docker volume/mount jogosultsági beállítása - nem az alkalmazás kódja."
+  );
+  console.error("=".repeat(60));
+  throw err;
 }
 
 export const db = new Database(path.join(dataDir, "app.db"));

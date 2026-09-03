@@ -26,11 +26,15 @@ RUN cd server && npm ci --omit=dev
 COPY --from=server-build /app/server/dist ./server/dist
 COPY --from=client-build /app/client-dist ./client-dist
 
-RUN mkdir -p /app/data && \
-    addgroup -S appgroup && adduser -S appuser -G appgroup && \
-    chown -R appuser:appgroup /app
+RUN mkdir -p /app/data
 
-USER appuser
+# Runs as root inside the container. A non-root user is nicer in theory,
+# but /app/data is normally a host bind mount (see docker-compose.yml),
+# and host environments vary too much in how they let a container user
+# write into a bind-mounted folder (ownership, SELinux, userns-remap,
+# network filesystems, ...) - it repeatedly broke SQLite's ability to
+# open its file across different hosts. Root-in-container is still
+# isolated by Docker itself, which is the actual security boundary here.
 VOLUME ["/app/data"]
 
 EXPOSE 3000

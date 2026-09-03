@@ -8,9 +8,19 @@ const SqliteStoreFactory = require("better-sqlite3-session-store")(session);
 
 import { seedSuperAdmin } from "./seed";
 import { ensureCsrfToken, verifyCsrfToken } from "./middleware/csrf";
+import { apiRateLimiter } from "./middleware/rateLimit";
 import { authRouter } from "./routes/auth";
 import { usersRouter } from "./routes/users";
 import { customersRouter } from "./routes/customers";
+
+const DEV_SESSION_SECRET = "dev_secret_change_me";
+const sessionSecret = process.env.SESSION_SECRET || DEV_SESSION_SECRET;
+if (process.env.NODE_ENV === "production" && sessionSecret === DEV_SESSION_SECRET) {
+  console.error(
+    "SESSION_SECRET nincs beállítva (.env). Éles környezetben kötelező egy erős, egyedi értéket megadni - a szerver nem indul el ezzel az alapértelmezett titokkal."
+  );
+  process.exit(1);
+}
 
 seedSuperAdmin();
 
@@ -45,7 +55,7 @@ app.use(
       expired: { clear: true, intervalMs: 900000 },
     }),
     name: "sid",
-    secret: process.env.SESSION_SECRET || "dev_secret_change_me",
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -62,6 +72,7 @@ app.use(
   })
 );
 
+app.use("/api", apiRateLimiter);
 app.use(ensureCsrfToken);
 app.use("/api", (req, res, next) => verifyCsrfToken(req, res, next));
 

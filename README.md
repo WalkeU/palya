@@ -20,3 +20,13 @@ docker compose logs ugyfelkoveto | grep -A2 Jelszó
 ```
 
 Ezzel a jelszóval kell először belépni, utána kötelező lecserélni.
+
+## Adatok / mentés
+
+Az adatbázis egy Docker-kezelt named volume-ban van (`docker volume ls` → `..._data`), nem a projekt mappájában — ez host-független, mindenhol megbízhatóan írható. Mentéshez:
+
+```bash
+docker run --rm -v ugyfelkoveto_data:/data -v "$(pwd)":/backup alpine tar czf /backup/adatok.tar.gz -C /data .
+```
+
+(a volume nevét `docker volume ls`-ből ellenőrizd, ha más a compose projekt neve).
