@@ -27,7 +27,11 @@ export function TaskCard({
       {...attributes}
       {...listeners}
       onClick={onOpen}
-      className="group cursor-grab rounded-xl border border-ink-100 bg-surface p-3.5 shadow-card transition hover:-translate-y-0.5 hover:shadow-card-hover active:cursor-grabbing"
+      className={`group cursor-grab rounded-xl border p-3.5 shadow-card transition hover:-translate-y-0.5 hover:shadow-card-hover active:cursor-grabbing ${
+        task.highlighted
+          ? "border-scale-1/40 bg-scale-1/10"
+          : "border-ink-100 bg-surface"
+      }`}
     >
       <div className="mb-1.5 flex items-start justify-between gap-2">
         <h3 className="min-w-0 flex-1 truncate text-sm font-semibold leading-snug text-ink-950">

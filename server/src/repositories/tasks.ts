@@ -20,6 +20,7 @@ export interface Task {
   assignee_email: string | null;
   assignee_avatar: string | null;
   position: number;
+  highlighted: boolean;
   created_by: number | null;
   creator_nickname: string | null;
   creator_email: string | null;
@@ -44,6 +45,7 @@ export interface TaskUpdateInput {
   stage?: TaskStage;
   assignee_id?: number | null;
   position?: number;
+  highlighted?: boolean;
   tag_ids?: number[];
 }
 
@@ -58,7 +60,11 @@ const SELECT_TASK = `
 
 function attachTags(tasks: Omit<Task, "tags">[]): Task[] {
   const tagsByTask = tagsRepo.listForTasks(tasks.map((t) => t.id));
-  return tasks.map((t) => ({ ...t, tags: tagsByTask.get(t.id) ?? [] }));
+  return tasks.map((t) => ({
+    ...t,
+    highlighted: !!t.highlighted,
+    tags: tagsByTask.get(t.id) ?? [],
+  }));
 }
 
 export const tasksRepo = {
@@ -120,12 +126,21 @@ export const tasksRepo = {
       assigneeId:
         input.assignee_id !== undefined ? input.assignee_id : existing.assignee_id,
       position: input.position !== undefined ? input.position : existing.position,
+      highlighted:
+        input.highlighted !== undefined
+          ? input.highlighted
+            ? 1
+            : 0
+          : existing.highlighted
+          ? 1
+          : 0,
     };
 
     db.prepare(
       `UPDATE tasks SET
         title = @title, description = @description, stage = @stage,
-        assignee_id = @assigneeId, position = @position, updated_at = datetime('now')
+        assignee_id = @assigneeId, position = @position, highlighted = @highlighted,
+        updated_at = datetime('now')
        WHERE id = @id`
     ).run({ ...merged, id });
 

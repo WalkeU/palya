@@ -94,6 +94,7 @@ export interface Task {
   assignee_email: string | null;
   assignee_avatar: string | null;
   position: number;
+  highlighted: boolean;
   created_by: number | null;
   creator_nickname: string | null;
   creator_email: string | null;

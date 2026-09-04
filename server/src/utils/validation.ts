@@ -92,6 +92,7 @@ export const updateTaskSchema = z.object({
   description: z.string().trim().max(5000).nullable().optional(),
   stage: taskStageEnum.optional(),
   assignee_id: z.number().int().nullable().optional(),
+  highlighted: z.boolean().optional(),
   tag_ids: tagIdsField,
 });
 

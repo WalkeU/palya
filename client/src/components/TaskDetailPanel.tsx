@@ -117,6 +117,10 @@ export function TaskDetailPanel({
     onDeleted(task.id);
   }
 
+  function handleToggleHighlight() {
+    persist({ highlighted: !task.highlighted });
+  }
+
   async function handleSubmitComment(e: FormEvent) {
     e.preventDefault();
     if (!newComment.trim()) return;
@@ -162,6 +166,28 @@ export function TaskDetailPanel({
               )}
             </p>
           </div>
+          <button
+            onClick={handleToggleHighlight}
+            aria-label={task.highlighted ? "Kiemelés eltávolítása" : "Feladat kiemelése"}
+            title={task.highlighted ? "Kiemelés eltávolítása" : "Feladat kiemelése"}
+            className="rounded-full p-1.5 transition hover:bg-ink-100"
+            style={{ color: task.highlighted ? "#e0564b" : "rgb(var(--ink-500))" }}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill={task.highlighted ? "currentColor" : "none"}
+            >
+              <path
+                d="M5 3v18M5 4h11l-2.5 4L16 12H5"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
           <button
             onClick={onClose}
             className="rounded-full p-1.5 text-ink-500 transition hover:bg-ink-100 hover:text-ink-900"

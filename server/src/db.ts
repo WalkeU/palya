@@ -66,6 +66,7 @@ db.exec(`
     stage TEXT NOT NULL CHECK (stage IN ('backlog', 'todo', 'in_progress', 'blocked', 'waiting_review', 'done', 'closed')) DEFAULT 'backlog',
     assignee_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     position INTEGER NOT NULL DEFAULT 0,
+    highlighted INTEGER NOT NULL DEFAULT 0,
     created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -208,4 +209,11 @@ if (!noteColumns.some((c) => c.name === "position")) {
     .all() as { id: number }[];
   const stmt = db.prepare("UPDATE notes SET position = ? WHERE id = ?");
   rows.forEach((r, idx) => stmt.run(idx, r.id));
+}
+
+// Migration: `highlighted` lets a task be flagged as extra-important,
+// rendered with a red-tinted card on the board.
+const taskColumns = db.prepare("PRAGMA table_info(tasks)").all() as ColumnInfo[];
+if (!taskColumns.some((c) => c.name === "highlighted")) {
+  db.exec("ALTER TABLE tasks ADD COLUMN highlighted INTEGER NOT NULL DEFAULT 0");
 }
