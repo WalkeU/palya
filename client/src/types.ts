@@ -38,6 +38,16 @@ export interface Comment {
   created_at: string;
 }
 
+export interface TaskComment {
+  id: number;
+  task_id: number;
+  author_id: number | null;
+  author_nickname: string | null;
+  author_email: string | null;
+  text: string;
+  created_at: string;
+}
+
 export const STAGES: { key: Stage; label: string; accent: string }[] = [
   { key: "potential", label: "Potenciál", accent: "#d99a3d" },
   { key: "discussion", label: "Egyeztetés", accent: "#4d7ea8" },
@@ -91,12 +101,26 @@ export interface Task {
   created_at: string;
   updated_at: string;
   tags: Tag[];
+  comment_count: number;
+}
+
+export type PollType = "single" | "multiple";
+
+export interface PollOption {
+  id: number;
+  text: string;
+  position: number;
+  voteCount: number;
+  votedByMe: boolean;
 }
 
 export interface Note {
   id: number;
   text: string;
   color: string;
+  poll_type: PollType | null;
+  poll_options: PollOption[];
+  position: number;
   created_by: number | null;
   author_nickname: string | null;
   author_email: string | null;

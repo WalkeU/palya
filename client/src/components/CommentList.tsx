@@ -1,4 +1,10 @@
-import type { Comment } from "../types";
+interface CommentLike {
+  id: number;
+  author_nickname: string | null;
+  author_email: string | null;
+  text: string;
+  created_at: string;
+}
 
 function formatRelative(iso: string): string {
   const date = new Date(iso + "Z");
@@ -13,7 +19,7 @@ function formatRelative(iso: string): string {
   return date.toLocaleDateString("hu-HU");
 }
 
-export function CommentList({ comments }: { comments: Comment[] }) {
+export function CommentList({ comments }: { comments: CommentLike[] }) {
   if (comments.length === 0) {
     return (
       <p className="rounded-lg bg-ink-50 px-3 py-4 text-center text-xs text-ink-500">

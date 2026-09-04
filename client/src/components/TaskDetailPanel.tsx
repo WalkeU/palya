@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
-import type { Tag, Task, TaskStage, TeamMember } from "../types";
+import { FormEvent, useEffect, useState } from "react";
+import type { Tag, Task, TaskComment, TaskStage, TeamMember } from "../types";
 import { TASK_STAGES } from "../types";
 import { api } from "../api/client";
 import { TagChip } from "./TagChip";
 import { AssigneePicker } from "./AssigneePicker";
 import { Avatar } from "./Avatar";
+import { CommentList } from "./CommentList";
 import { useEscapeToClose } from "../hooks/useEscapeToClose";
 
 function formatDateTime(iso: string): string {
@@ -44,6 +45,10 @@ export function TaskDetailPanel({
   const [titleError, setTitleError] = useState<string | null>(null);
   const [allTags, setAllTags] = useState<Tag[]>([]);
 
+  const [comments, setComments] = useState<TaskComment[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [postingComment, setPostingComment] = useState(false);
+
   useEffect(() => {
     setForm({ title: task.title, description: task.description || "" });
     setStage(task.stage);
@@ -53,6 +58,12 @@ export function TaskDetailPanel({
   useEffect(() => {
     api<{ tags: Tag[] }>("/api/tags").then((d) => setAllTags(d.tags));
   }, []);
+
+  useEffect(() => {
+    api<{ comments: TaskComment[] }>(`/api/tasks/${task.id}/comments`).then((d) =>
+      setComments(d.comments)
+    );
+  }, [task.id]);
 
   function toggleTag(id: number) {
     const current = task.tags.map((t) => t.id);
@@ -104,6 +115,23 @@ export function TaskDetailPanel({
     if (!window.confirm(`Biztosan törlöd "${task.title}" feladatot?`)) return;
     await api(`/api/tasks/${task.id}`, { method: "DELETE" });
     onDeleted(task.id);
+  }
+
+  async function handleSubmitComment(e: FormEvent) {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    setPostingComment(true);
+    try {
+      const data = await api<{ comment: TaskComment }>(
+        `/api/tasks/${task.id}/comments`,
+        { method: "POST", body: { text: newComment.trim() } }
+      );
+      setComments((prev) => [...prev, data.comment]);
+      onUpdated({ ...task, comment_count: comments.length + 1 });
+      setNewComment("");
+    } finally {
+      setPostingComment(false);
+    }
   }
 
   return (
@@ -263,6 +291,38 @@ export function TaskDetailPanel({
                 className="w-full resize-none rounded-lg border border-ink-100 bg-surface px-3 py-2 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               />
             </div>
+          </section>
+
+          <section>
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-500">
+              Kommentek
+            </span>
+            <CommentList comments={comments} />
+            <form onSubmit={handleSubmitComment} className="mt-3 flex items-center gap-2">
+              <input
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Új komment…"
+                className="flex-1 rounded-lg border border-ink-100 bg-surface px-3 py-2 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+              />
+              <button
+                type="submit"
+                disabled={postingComment || !newComment.trim()}
+                aria-label="Küldés"
+                title="Küldés"
+                className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg bg-night text-white transition hover:bg-brand-600 disabled:opacity-50"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M4 12h16M13 5l7 7-7 7"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </form>
           </section>
         </div>
 

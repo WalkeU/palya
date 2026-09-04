@@ -88,9 +88,32 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     text TEXT NOT NULL,
     color TEXT NOT NULL DEFAULT '#d99a3d',
+    poll_type TEXT CHECK (poll_type IN ('single', 'multiple')),
+    position INTEGER NOT NULL DEFAULT 0,
     created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS task_comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    author_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    text TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS poll_options (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+    text TEXT NOT NULL,
+    position INTEGER NOT NULL DEFAULT 0
+  );
+
+  CREATE TABLE IF NOT EXISTS poll_votes (
+    option_id INTEGER NOT NULL REFERENCES poll_options(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (option_id, user_id)
   );
 
   CREATE TABLE IF NOT EXISTS links (
@@ -112,6 +135,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_customers_stage ON customers(stage);
   CREATE INDEX IF NOT EXISTS idx_comments_customer ON comments(customer_id);
   CREATE INDEX IF NOT EXISTS idx_tasks_stage ON tasks(stage);
+  CREATE INDEX IF NOT EXISTS idx_task_comments_task ON task_comments(task_id);
 `);
 
 // Migration: `business` column and `name` becoming nullable were added
@@ -165,4 +189,23 @@ if (!customerColumns.some((c) => c.name === "closed_reason")) {
   db.exec(
     "ALTER TABLE customers ADD COLUMN closed_reason TEXT CHECK (closed_reason IN ('not_interested', 'failed'))"
   );
+}
+
+// Migration: `poll_type` lets a note double as a single/multiple-choice poll.
+let noteColumns = db.prepare("PRAGMA table_info(notes)").all() as ColumnInfo[];
+if (!noteColumns.some((c) => c.name === "poll_type")) {
+  db.exec("ALTER TABLE notes ADD COLUMN poll_type TEXT CHECK (poll_type IN ('single', 'multiple'))");
+}
+
+// Migration: `position` lets notes be drag-reordered by the team instead of
+// always sitting in created_at order - backfill preserves the previous
+// newest-first order so nothing visibly jumps around on upgrade.
+noteColumns = db.prepare("PRAGMA table_info(notes)").all() as ColumnInfo[];
+if (!noteColumns.some((c) => c.name === "position")) {
+  db.exec("ALTER TABLE notes ADD COLUMN position INTEGER NOT NULL DEFAULT 0");
+  const rows = db
+    .prepare("SELECT id FROM notes ORDER BY created_at DESC, id DESC")
+    .all() as { id: number }[];
+  const stmt = db.prepare("UPDATE notes SET position = ? WHERE id = ?");
+  rows.forEach((r, idx) => stmt.run(idx, r.id));
 }

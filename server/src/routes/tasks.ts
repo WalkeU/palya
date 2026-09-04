@@ -1,9 +1,11 @@
 import { Router } from "express";
 import { tasksRepo } from "../repositories/tasks";
+import { taskCommentsRepo } from "../repositories/taskComments";
 import {
   createTaskSchema,
   updateTaskSchema,
   taskReorderSchema,
+  createCommentSchema,
 } from "../utils/validation";
 import { requireAuth } from "../middleware/auth";
 
@@ -55,4 +57,25 @@ tasksRouter.delete("/:id", (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: "invalid_id" });
   tasksRepo.remove(id);
   res.json({ ok: true });
+});
+
+tasksRouter.get("/:id/comments", (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: "invalid_id" });
+  res.json({ comments: taskCommentsRepo.listForTask(id) });
+});
+
+tasksRouter.post("/:id/comments", (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: "invalid_id" });
+  if (!tasksRepo.findById(id)) {
+    return res.status(404).json({ error: "not_found" });
+  }
+  const parsed = createCommentSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "invalid_input" });
+  }
+  const user = (req as any).user;
+  const comment = taskCommentsRepo.create(id, user.id, parsed.data.text);
+  res.status(201).json({ comment });
 });

@@ -127,11 +127,28 @@ export const updateProfileSchema = z.object({
 export const createNoteSchema = z.object({
   text: z.string().trim().min(1, "A jegyzet nem lehet üres").max(500),
   color: z.enum(TAG_COLORS).optional(),
+  poll: z
+    .object({
+      type: z.enum(["single", "multiple"]),
+      options: z
+        .array(z.string().trim().min(1, "Az opció nem lehet üres").max(120))
+        .min(2, "Legalább 2 opció szükséges")
+        .max(10, "Legfeljebb 10 opció adható meg"),
+    })
+    .optional(),
 });
 
 export const updateNoteSchema = z.object({
   text: z.string().trim().min(1, "A jegyzet nem lehet üres").max(500).optional(),
   color: z.enum(TAG_COLORS).optional(),
+});
+
+export const voteNoteSchema = z.object({
+  optionId: z.number().int(),
+});
+
+export const reorderNotesSchema = z.object({
+  orderedIds: z.array(z.number().int()),
 });
 
 const linkUrlField = z
