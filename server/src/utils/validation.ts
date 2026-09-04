@@ -141,6 +141,16 @@ export const createNoteSchema = z.object({
 export const updateNoteSchema = z.object({
   text: z.string().trim().min(1, "A jegyzet nem lehet üres").max(500).optional(),
   color: z.enum(TAG_COLORS).optional(),
+  pollOptions: z
+    .array(
+      z.object({
+        id: z.number().int().optional(),
+        text: z.string().trim().min(1, "Az opció nem lehet üres").max(120),
+      })
+    )
+    .min(2, "Legalább 2 opció szükséges")
+    .max(10, "Legfeljebb 10 opció adható meg")
+    .optional(),
 });
 
 export const voteNoteSchema = z.object({
@@ -167,16 +177,37 @@ const linkUrlField = z
     { message: "Érvénytelen link (http:// vagy https:// szükséges)" }
   );
 
+// Keep in sync with LINK_ICON_NAMES in client/src/components/icons.tsx.
+export const LINK_ICON_NAMES = [
+  "link-2",
+  "globe",
+  "image",
+  "calendar",
+  "file-text",
+  "mail",
+  "map-pin",
+  "github",
+  "slack",
+  "video",
+  "book-open",
+  "folder",
+  "users",
+  "shopping-cart",
+  "message-circle",
+] as const;
+
+const linkIconField = z.enum(LINK_ICON_NAMES).nullable().optional();
+
 export const createLinkSchema = z.object({
   label: z.string().trim().min(1, "A név megadása kötelező").max(60),
   url: linkUrlField,
-  icon: z.string().trim().max(8).nullable().optional(),
+  icon: linkIconField,
 });
 
 export const updateLinkSchema = z.object({
   label: z.string().trim().min(1).max(60).optional(),
   url: linkUrlField.optional(),
-  icon: z.string().trim().max(8).nullable().optional(),
+  icon: linkIconField,
 });
 
 export const updateAppSettingsSchema = z.object({

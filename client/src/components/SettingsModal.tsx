@@ -10,6 +10,7 @@ import { TagChip } from "./TagChip";
 import { PasswordInput } from "./PasswordInput";
 import { UsersManagement } from "./UsersManagement";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { IconPicker, LinkIcon } from "./icons";
 import { useEscapeToClose } from "../hooks/useEscapeToClose";
 
 const AVATAR_SIZE = 160;
@@ -544,13 +545,7 @@ function LinksTab() {
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
               Ikon
             </label>
-            <input
-              value={icon}
-              onChange={(e) => setIcon(e.target.value)}
-              maxLength={8}
-              placeholder="🔗"
-              className="w-full rounded-lg border border-ink-100 bg-ink-50/60 px-2.5 py-2.5 text-center text-sm outline-none transition focus:border-brand-400 focus:bg-surface focus:ring-2 focus:ring-brand-100"
-            />
+            <IconPicker value={icon || null} onChange={setIcon} />
           </div>
           <div className="min-w-[140px] flex-1">
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
@@ -596,12 +591,9 @@ function LinksTab() {
                 key={l.id}
                 className="flex flex-wrap items-end gap-2 rounded-lg border border-brand-400 bg-brand-100/30 p-2.5"
               >
-                <input
-                  value={editIcon}
-                  onChange={(e) => setEditIcon(e.target.value)}
-                  maxLength={8}
-                  className="w-14 rounded-lg border border-ink-100 bg-surface px-2 py-2 text-center text-sm outline-none focus:border-brand-400"
-                />
+                <div className="w-14">
+                  <IconPicker value={editIcon || null} onChange={setEditIcon} />
+                </div>
                 <input
                   value={editLabel}
                   onChange={(e) => setEditLabel(e.target.value)}
@@ -635,7 +627,7 @@ function LinksTab() {
                 key={l.id}
                 className="flex items-center gap-3 rounded-lg border border-ink-100 bg-surface px-3.5 py-2.5"
               >
-                <span className="text-base leading-none">{l.icon || "🔗"}</span>
+                <LinkIcon name={l.icon} className="shrink-0 text-ink-500" size={18} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-ink-900">{l.label}</p>
                   <p className="truncate text-xs text-ink-500">{l.url}</p>

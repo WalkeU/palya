@@ -146,14 +146,51 @@ export const notesRepo = {
     tx(orderedIds);
   },
 
-  update(id: number, patch: { text?: string; color?: string }): Note | undefined {
+  update(
+    id: number,
+    patch: {
+      text?: string;
+      color?: string;
+      pollOptions?: { id?: number; text: string }[];
+    }
+  ): Note | undefined {
     const existing = this.findById(id);
     if (!existing) return undefined;
     const text = patch.text !== undefined ? patch.text : existing.text;
     const color = patch.color !== undefined ? patch.color : existing.color;
-    db.prepare(
-      "UPDATE notes SET text = ?, color = ?, updated_at = datetime('now') WHERE id = ?"
-    ).run(text, color, id);
+
+    const tx = db.transaction(() => {
+      db.prepare(
+        "UPDATE notes SET text = ?, color = ?, updated_at = datetime('now') WHERE id = ?"
+      ).run(text, color, id);
+
+      if (patch.pollOptions && existing.poll_type) {
+        const existingIds = new Set(existing.poll_options.map((o) => o.id));
+        const keepIds = new Set(
+          patch.pollOptions.filter((o) => o.id !== undefined).map((o) => o.id)
+        );
+        for (const oldId of existingIds) {
+          if (!keepIds.has(oldId)) {
+            db.prepare("DELETE FROM poll_options WHERE id = ?").run(oldId);
+          }
+        }
+        const updateStmt = db.prepare(
+          "UPDATE poll_options SET text = ?, position = ? WHERE id = ? AND note_id = ?"
+        );
+        const insertStmt = db.prepare(
+          "INSERT INTO poll_options (note_id, text, position) VALUES (?, ?, ?)"
+        );
+        patch.pollOptions.forEach((opt, idx) => {
+          if (opt.id !== undefined && existingIds.has(opt.id)) {
+            updateStmt.run(opt.text, idx, opt.id, id);
+          } else {
+            insertStmt.run(id, opt.text, idx);
+          }
+        });
+      }
+    });
+    tx();
+
     return this.findById(id);
   },
 

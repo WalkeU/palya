@@ -17,6 +17,7 @@ import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { TopBar } from "../components/TopBar";
 import { Avatar } from "../components/Avatar";
+import { LinkIcon } from "../components/icons";
 
 function formatRelative(iso: string): string {
   const date = new Date(iso + "Z");
@@ -220,6 +221,9 @@ function NoteBubble({
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(note.text);
   const [voting, setVoting] = useState<number | null>(null);
+  const [editingPoll, setEditingPoll] = useState(false);
+  const [pollDraft, setPollDraft] = useState<{ id?: number; text: string }[]>([]);
+  const [savingPoll, setSavingPoll] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: note.id });
 
@@ -227,6 +231,37 @@ function NoteBubble({
   const totalVotes = isPoll
     ? note.poll_options.reduce((sum, o) => sum + o.voteCount, 0)
     : 0;
+
+  function startEditPoll() {
+    setPollDraft(note.poll_options.map((o) => ({ id: o.id, text: o.text })));
+    setEditingPoll(true);
+  }
+  function updateDraftOption(idx: number, value: string) {
+    setPollDraft((prev) => prev.map((o, i) => (i === idx ? { ...o, text: value } : o)));
+  }
+  function addDraftOption() {
+    setPollDraft((prev) => (prev.length >= 10 ? prev : [...prev, { text: "" }]));
+  }
+  function removeDraftOption(idx: number) {
+    setPollDraft((prev) => (prev.length <= 2 ? prev : prev.filter((_, i) => i !== idx)));
+  }
+  const validDraft = pollDraft.map((o) => ({ ...o, text: o.text.trim() })).filter((o) => o.text);
+  const canSavePoll = validDraft.length >= 2;
+
+  async function savePollOptions() {
+    if (!canSavePoll) return;
+    setSavingPoll(true);
+    try {
+      const data = await api<{ note: Note }>(`/api/notes/${note.id}`, {
+        method: "PATCH",
+        body: { pollOptions: validDraft },
+      });
+      onUpdated(data.note);
+      setEditingPoll(false);
+    } finally {
+      setSavingPoll(false);
+    }
+  }
 
   async function persist() {
     const trimmed = text.trim();
@@ -319,7 +354,59 @@ function NoteBubble({
         </p>
       )}
 
-      {isPoll && (
+      {isPoll && editingPoll && (
+        <div className="flex flex-col gap-1.5 rounded-lg border border-ink-100 bg-ink-50/60 p-2.5">
+          {pollDraft.map((opt, idx) => (
+            <div key={opt.id ?? `new-${idx}`} className="flex items-center gap-1.5">
+              <input
+                value={opt.text}
+                onChange={(e) => updateDraftOption(idx, e.target.value)}
+                maxLength={120}
+                placeholder={`Opció ${idx + 1}`}
+                className="min-w-0 flex-1 rounded-md border border-ink-100 bg-surface px-2 py-1.5 text-xs outline-none transition focus:border-brand-400"
+              />
+              {pollDraft.length > 2 && (
+                <button
+                  type="button"
+                  onClick={() => removeDraftOption(idx)}
+                  aria-label="Opció törlése"
+                  className="shrink-0 text-ink-500 transition hover:text-scale-1"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          ))}
+          {pollDraft.length < 10 && (
+            <button
+              type="button"
+              onClick={addDraftOption}
+              className="self-start text-[11px] font-medium text-ink-500 transition hover:text-ink-900"
+            >
+              + Opció
+            </button>
+          )}
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setEditingPoll(false)}
+              className="rounded-md px-2.5 py-1 text-xs font-medium text-ink-500 transition hover:text-ink-900"
+            >
+              Mégse
+            </button>
+            <button
+              type="button"
+              onClick={savePollOptions}
+              disabled={savingPoll || !canSavePoll}
+              className="rounded-md bg-night px-3 py-1 text-xs font-medium text-white transition hover:bg-brand-600 disabled:opacity-60"
+            >
+              Mentés
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isPoll && !editingPoll && (
         <div className="flex flex-col gap-1.5">
           {note.poll_options.map((opt) => {
             const pct = totalVotes > 0 ? Math.round((opt.voteCount / totalVotes) * 100) : 0;
@@ -357,9 +444,18 @@ function NoteBubble({
               </button>
             );
           })}
-          <p className="text-[10px] text-ink-500">
-            {totalVotes} szavazat ·{" "}
-            {note.poll_type === "single" ? "egy válasz adható" : "több válasz is adható"}
+          <p className="flex items-center justify-between text-[10px] text-ink-500">
+            <span>
+              {totalVotes} szavazat ·{" "}
+              {note.poll_type === "single" ? "egy válasz adható" : "több válasz is adható"}
+            </span>
+            <button
+              type="button"
+              onClick={startEditPoll}
+              className="shrink-0 font-medium text-ink-500 underline-offset-2 transition hover:text-ink-900 hover:underline"
+            >
+              Opciók szerkesztése
+            </button>
           </p>
         </div>
       )}
@@ -493,7 +589,7 @@ export default function Home() {
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 rounded-lg border border-ink-100 bg-surface px-3.5 py-2 text-sm font-medium text-ink-900 shadow-card transition hover:-translate-y-0.5 hover:shadow-card-hover"
                     >
-                      <span className="text-base leading-none">{l.icon || "🔗"}</span>
+                      <LinkIcon name={l.icon} className="shrink-0 text-ink-500" />
                       <span className="truncate">{l.label}</span>
                     </a>
                   ))}
