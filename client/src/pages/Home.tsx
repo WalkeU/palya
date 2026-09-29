@@ -18,6 +18,7 @@ import { useAuth } from "../context/AuthContext";
 import { TopBar } from "../components/TopBar";
 import { Avatar } from "../components/Avatar";
 import { LinkIcon } from "../components/icons";
+import { useAppVersion } from "../hooks/useAppVersion";
 
 function formatRelative(iso: string): string {
   const date = new Date(iso + "Z");
@@ -299,6 +300,8 @@ function NoteBubble({
   return (
     <div
       ref={setNodeRef}
+      {...attributes}
+      {...listeners}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
@@ -306,25 +309,10 @@ function NoteBubble({
         borderColor: `${note.color}55`,
         backgroundColor: `${note.color}14`,
       }}
-      className={`group relative flex flex-col gap-2.5 rounded-xl border p-3.5 shadow-card transition hover:-translate-y-0.5 hover:shadow-card-hover ${
+      className={`group relative flex cursor-grab flex-col gap-2.5 rounded-xl border p-3.5 shadow-card transition hover:-translate-y-0.5 hover:shadow-card-hover active:cursor-grabbing ${
         isPoll ? "w-64" : "w-[210px]"
       } ${rotation}`}
     >
-      <button
-        {...attributes}
-        {...listeners}
-        aria-label="Jegyzet mozgatása"
-        className="absolute -left-1.5 -top-1.5 hidden h-5 w-5 cursor-grab items-center justify-center rounded-full bg-ink-700 text-white group-hover:flex active:cursor-grabbing"
-      >
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="9" cy="6" r="1.6" />
-          <circle cx="15" cy="6" r="1.6" />
-          <circle cx="9" cy="12" r="1.6" />
-          <circle cx="15" cy="12" r="1.6" />
-          <circle cx="9" cy="18" r="1.6" />
-          <circle cx="15" cy="18" r="1.6" />
-        </svg>
-      </button>
       <button
         onClick={handleDelete}
         aria-label="Jegyzet törlése"
@@ -339,6 +327,7 @@ function NoteBubble({
           value={text}
           onChange={(e) => setText(e.target.value)}
           onBlur={persist}
+          onPointerDown={(e) => e.stopPropagation()}
           rows={3}
           maxLength={500}
           className="w-full resize-none rounded-lg border border-ink-100 bg-surface px-2 py-1.5 text-sm text-ink-900 outline-none focus:border-brand-400"
@@ -361,6 +350,7 @@ function NoteBubble({
               <input
                 value={opt.text}
                 onChange={(e) => updateDraftOption(idx, e.target.value)}
+                onPointerDown={(e) => e.stopPropagation()}
                 maxLength={120}
                 placeholder={`Opció ${idx + 1}`}
                 className="min-w-0 flex-1 rounded-md border border-ink-100 bg-surface px-2 py-1.5 text-xs outline-none transition focus:border-brand-400"
@@ -502,9 +492,10 @@ function TrashDropzone() {
 
 export default function Home() {
   const { user } = useAuth();
+  const version = useAppVersion();
   const [notes, setNotes] = useState<Note[]>([]);
   const [links, setLinks] = useState<Link[]>([]);
-  const [settings, setSettings] = useState<AppSettings>({ linksEnabled: true });
+  const [settings, setSettings] = useState<AppSettings>({ linksEnabled: true, autoCloseDays: 30 });
   const [loading, setLoading] = useState(true);
   const [composing, setComposing] = useState(false);
   const [activeId, setActiveId] = useState<number | null>(null);
@@ -572,6 +563,9 @@ export default function Home() {
             <p className="mt-1.5 text-sm text-ink-500">
               Szia{user?.nickname ? `, ${user.nickname}` : ""}! Itt a csapat közös jegyzetei.
             </p>
+            {version && (
+              <p className="mt-1 text-[11px] text-ink-300">v{version}</p>
+            )}
           </div>
 
           <div className="flex flex-col gap-8 sm:flex-row sm:items-start">

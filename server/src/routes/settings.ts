@@ -8,7 +8,10 @@ export const settingsRouter = Router();
 settingsRouter.use(requireAuth);
 
 function readSettings() {
-  return { linksEnabled: appSettingsRepo.getBool("linksEnabled", true) };
+  return {
+    linksEnabled: appSettingsRepo.getBool("linksEnabled", true),
+    autoCloseDays: appSettingsRepo.getInt("autoCloseDays", 30),
+  };
 }
 
 settingsRouter.get("/", (_req, res) => {
@@ -22,6 +25,9 @@ settingsRouter.patch("/", (req, res) => {
   }
   if (parsed.data.linksEnabled !== undefined) {
     appSettingsRepo.setBool("linksEnabled", parsed.data.linksEnabled);
+  }
+  if (parsed.data.autoCloseDays !== undefined) {
+    appSettingsRepo.setInt("autoCloseDays", parsed.data.autoCloseDays);
   }
   res.json(readSettings());
 });

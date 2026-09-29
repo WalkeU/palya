@@ -23,4 +23,15 @@ export const appSettingsRepo = {
   setBool(key: string, value: boolean) {
     this.set(key, value ? "1" : "0");
   },
+
+  getInt(key: string, fallback: number): number {
+    const value = this.get(key);
+    if (value === undefined) return fallback;
+    const parsed = Number(value);
+    return Number.isInteger(parsed) ? parsed : fallback;
+  },
+
+  setInt(key: string, value: number) {
+    this.set(key, String(Math.trunc(value)));
+  },
 };

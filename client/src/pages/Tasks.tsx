@@ -19,7 +19,7 @@ import { TaskColumn } from "../components/TaskColumn";
 import { TaskCard } from "../components/TaskCard";
 import { TaskDetailPanel } from "../components/TaskDetailPanel";
 import { NewTaskModal } from "../components/NewTaskModal";
-import { PeopleFilterBar } from "../components/PeopleFilterBar";
+import { PeopleFilterBar, type PersonFilter } from "../components/PeopleFilterBar";
 import { TagFilterBar } from "../components/TagFilterBar";
 
 const BOARD_STAGE_KEYS = new Set(TASK_STAGES.map((s) => s.key));
@@ -81,8 +81,9 @@ export default function Tasks() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("board");
-  const [selectedPersonId, setSelectedPersonId] = useState<number | null>(null);
+  const [selectedPersonId, setSelectedPersonId] = useState<PersonFilter>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set());
+  const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<number | null>(null);
   const [selected, setSelected] = useState<Task | null>(null);
   const [creating, setCreating] = useState(false);
@@ -139,17 +140,23 @@ export default function Tasks() {
     });
   }, [user?.id, user?.nickname, user?.avatar]);
 
-  const visibleTasks = useMemo(
-    () =>
-      tasks
-        .filter((t) => selectedPersonId === null || t.assignee_id === selectedPersonId)
-        .filter(
-          (t) =>
-            selectedTagIds.size === 0 ||
-            t.tags.some((tag) => selectedTagIds.has(tag.id))
-        ),
-    [tasks, selectedPersonId, selectedTagIds]
-  );
+  const visibleTasks = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return tasks
+      .filter((t) =>
+        selectedPersonId === null
+          ? true
+          : selectedPersonId === "unassigned"
+          ? t.assignee_id === null
+          : t.assignee_id === selectedPersonId
+      )
+      .filter(
+        (t) =>
+          selectedTagIds.size === 0 ||
+          t.tags.some((tag) => selectedTagIds.has(tag.id))
+      )
+      .filter((t) => !q || t.title.toLowerCase().includes(q));
+  }, [tasks, selectedPersonId, selectedTagIds, search]);
 
   function toggleTagFilter(id: number) {
     setSelectedTagIds((prev) => {
@@ -323,6 +330,13 @@ export default function Tasks() {
               />
             </>
           )}
+          <div className="hidden h-6 w-px bg-ink-300 sm:block" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Keresés cím alapján…"
+            className="min-w-[160px] flex-1 rounded-lg border border-ink-100 bg-surface px-3 py-1.5 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 sm:max-w-xs sm:flex-none"
+          />
         </div>
       </div>
 

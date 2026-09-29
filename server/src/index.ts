@@ -18,6 +18,9 @@ import { tagsRouter } from "./routes/tags";
 import { notesRouter } from "./routes/notes";
 import { linksRouter } from "./routes/links";
 import { settingsRouter } from "./routes/settings";
+import { versionRouter } from "./routes/version";
+import { tasksRepo } from "./repositories/tasks";
+import { appSettingsRepo } from "./repositories/appSettings";
 
 const DEV_SESSION_SECRET = "dev_secret_change_me";
 const sessionSecret = process.env.SESSION_SECRET || DEV_SESSION_SECRET;
@@ -104,6 +107,18 @@ app.use("/api/tags", tagsRouter);
 app.use("/api/notes", notesRouter);
 app.use("/api/links", linksRouter);
 app.use("/api/settings", settingsRouter);
+app.use("/api/version", versionRouter);
+
+// Auto-close "done" tasks that have sat there past the configurable
+// threshold (settable in Beállítások) - runs on boot, then every 6 hours.
+// Restorable via the task panel's own "Visszaállítás" button, so a missed
+// or overly eager sweep is never destructive.
+function runAutoCloseSweep() {
+  const days = appSettingsRepo.getInt("autoCloseDays", 30);
+  tasksRepo.autoCloseStale(days);
+}
+runAutoCloseSweep();
+setInterval(runAutoCloseSweep, 1000 * 60 * 60 * 6);
 
 const clientDist = path.join(__dirname, "..", "..", "client-dist");
 app.use(express.static(clientDist));

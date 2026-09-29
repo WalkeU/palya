@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import type { Tag, Task, TaskComment, TaskStage, TeamMember } from "../types";
 import { TASK_STAGES } from "../types";
 import { api } from "../api/client";
@@ -48,6 +48,15 @@ export function TaskDetailPanel({
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [postingComment, setPostingComment] = useState(false);
+  const titleRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const el = titleRef.current;
+    if (el) {
+      el.style.height = "auto";
+      el.style.height = `${el.scrollHeight}px`;
+    }
+  }, [form.title]);
 
   useEffect(() => {
     setForm({ title: task.title, description: task.description || "" });
@@ -97,7 +106,7 @@ export function TaskDetailPanel({
     persist({ title: nextTitle });
   }
 
-  function handleDescriptionBlur() {
+  function handleUpdateDescription() {
     persist({ description: form.description.trim() || null });
   }
 
@@ -147,12 +156,20 @@ export function TaskDetailPanel({
       <aside className="fixed right-0 top-0 z-40 flex h-full w-full max-w-md animate-panel-in flex-col border-l border-ink-100 bg-ink-50 shadow-panel">
         <div className="flex items-center justify-between border-b border-ink-100 bg-surface px-5 py-4">
           <div className="min-w-0 flex-1">
-            <input
+            <textarea
+              ref={titleRef}
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
               onBlur={handleTitleBlur}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  (e.target as HTMLTextAreaElement).blur();
+                }
+              }}
               placeholder="Cím"
-              className="w-full rounded-md border border-transparent bg-transparent text-lg font-semibold text-ink-950 outline-none transition hover:border-ink-100 focus:border-brand-400 focus:bg-ink-50 focus:px-2 focus:py-1"
+              rows={1}
+              className="w-full resize-none overflow-hidden break-words rounded-md border border-transparent bg-transparent text-lg font-semibold leading-snug text-ink-950 outline-none transition hover:border-ink-100 focus:border-brand-400 focus:bg-ink-50 focus:px-2 focus:py-1"
             />
             <p className="mt-0.5 text-xs text-ink-500">
               {titleError ? (
@@ -213,20 +230,20 @@ export function TaskDetailPanel({
               Táblára
             </button>
           )}
-          {stage === "done" && (
-            <button
-              onClick={() => handleStageChange("closed")}
-              className="mb-5 w-full rounded-lg bg-night py-2 text-sm font-medium text-white transition hover:bg-brand-600"
-            >
-              Lezárás
-            </button>
-          )}
           {stage === "closed" && (
             <button
               onClick={() => handleStageChange("done")}
               className="mb-5 w-full rounded-lg border border-ink-100 py-2 text-sm font-medium text-ink-700 transition hover:border-ink-300"
             >
               Visszaállítás (Done)
+            </button>
+          )}
+          {stage !== "backlog" && stage !== "closed" && (
+            <button
+              onClick={() => handleStageChange("backlog")}
+              className="mb-5 w-full rounded-lg border border-ink-100 py-2 text-sm font-medium text-ink-500 transition hover:border-ink-300 hover:text-ink-900"
+            >
+              Backlogba
             </button>
           )}
 
@@ -311,11 +328,20 @@ export function TaskDetailPanel({
                 onChange={(e) =>
                   setForm((f) => ({ ...f, description: e.target.value }))
                 }
-                onBlur={handleDescriptionBlur}
                 rows={4}
                 placeholder="Bármilyen egyéb adat…"
                 className="w-full resize-none rounded-lg border border-ink-100 bg-surface px-3 py-2 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               />
+              <div className="mt-1.5 flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleUpdateDescription}
+                  disabled={form.description.trim() === (task.description || "")}
+                  className="rounded-md bg-night px-3 py-1.5 text-xs font-medium text-white transition hover:bg-brand-600 disabled:opacity-50"
+                >
+                  Frissítés
+                </button>
+              </div>
             </div>
           </section>
 
@@ -353,12 +379,24 @@ export function TaskDetailPanel({
         </div>
 
         <div className="border-t border-ink-100 bg-surface px-5 py-3">
-          <button
-            onClick={handleDelete}
-            className="text-xs font-medium text-ink-500 transition hover:text-scale-1"
-          >
-            Feladat törlése
-          </button>
+          <div className="flex items-center justify-between gap-2">
+            {stage === "done" ? (
+              <button
+                onClick={() => handleStageChange("closed")}
+                className="rounded-md border border-ink-100 px-2.5 py-1 text-xs font-medium text-ink-700 transition hover:border-ink-300 hover:text-ink-900"
+              >
+                Lezárás
+              </button>
+            ) : (
+              <span />
+            )}
+            <button
+              onClick={handleDelete}
+              className="shrink-0 text-xs font-medium text-ink-500 transition hover:text-scale-1"
+            >
+              Feladat törlése
+            </button>
+          </div>
         </div>
       </aside>
     </>
