@@ -11,6 +11,9 @@ function readSettings() {
   return {
     linksEnabled: appSettingsRepo.getBool("linksEnabled", true),
     autoCloseDays: appSettingsRepo.getInt("autoCloseDays", 30),
+    customerPrimaryField:
+      (appSettingsRepo.get("customerPrimaryField") as "name" | "business" | undefined) ||
+      "name",
   };
 }
 
@@ -28,6 +31,9 @@ settingsRouter.patch("/", (req, res) => {
   }
   if (parsed.data.autoCloseDays !== undefined) {
     appSettingsRepo.setInt("autoCloseDays", parsed.data.autoCloseDays);
+  }
+  if (parsed.data.customerPrimaryField !== undefined) {
+    appSettingsRepo.set("customerPrimaryField", parsed.data.customerPrimaryField);
   }
   res.json(readSettings());
 });

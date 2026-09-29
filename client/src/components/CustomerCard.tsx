@@ -1,15 +1,23 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { Customer } from "../types";
+import type { AppSettings, Customer } from "../types";
 import { ScaleBadge } from "./ScaleBadge";
 
 export function CustomerCard({
   customer,
+  primaryField,
   onOpen,
 }: {
   customer: Customer;
+  primaryField: AppSettings["customerPrimaryField"];
   onOpen: () => void;
 }) {
+  const primary =
+    primaryField === "business"
+      ? customer.business || customer.name
+      : customer.name || customer.business;
+  const secondary =
+    primaryField === "business" ? customer.name : customer.business;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: customer.id });
 
@@ -31,10 +39,10 @@ export function CustomerCard({
       <div className="mb-1.5 flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-semibold leading-snug text-ink-950">
-            {customer.name || customer.business}
+            {primary}
           </h3>
           {customer.name && customer.business && (
-            <p className="truncate text-xs text-ink-500">{customer.business}</p>
+            <p className="truncate text-xs text-ink-500">{secondary}</p>
           )}
         </div>
         {customer.stage === "potential" && (

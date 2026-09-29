@@ -14,7 +14,7 @@ import {
   arrayMove,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import type { Customer, Stage } from "../types";
+import type { AppSettings, Customer, Stage } from "../types";
 import { CLOSED_REASONS, STAGES } from "../types";
 import { api } from "../api/client";
 import { TopBar } from "../components/TopBar";
@@ -34,14 +34,19 @@ export default function Board() {
   const [activeId, setActiveId] = useState<number | null>(null);
   const [selected, setSelected] = useState<Customer | null>(null);
   const [creating, setCreating] = useState(false);
+  const [primaryField, setPrimaryField] = useState<AppSettings["customerPrimaryField"]>("name");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
   useEffect(() => {
-    api<{ customers: Customer[] }>("/api/customers").then((d) => {
-      setCustomers(d.customers);
+    Promise.all([
+      api<{ customers: Customer[] }>("/api/customers"),
+      api<AppSettings>("/api/settings"),
+    ]).then(([customerData, settingsData]) => {
+      setCustomers(customerData.customers);
+      setPrimaryField(settingsData.customerPrimaryField);
       setLoading(false);
     });
   }, []);
@@ -190,7 +195,11 @@ export default function Board() {
                       >
                         {CLOSED_REASONS.find((r) => r.key === c.closed_reason)?.label}
                       </span>
-                      <CustomerCard customer={c} onOpen={() => setSelected(c)} />
+                      <CustomerCard
+                        customer={c}
+                        primaryField={primaryField}
+                        onOpen={() => setSelected(c)}
+                      />
                     </div>
                   ))}
                 </div>
@@ -213,6 +222,7 @@ export default function Board() {
                   label={col.label}
                   accent={col.accent}
                   customers={col.items}
+                  primaryField={primaryField}
                   onOpenCustomer={setSelected}
                 />
               ))}
@@ -220,7 +230,11 @@ export default function Board() {
             <DragOverlay>
               {activeCustomer && (
                 <div className="w-[270px] rotate-2">
-                  <CustomerCard customer={activeCustomer} onOpen={() => {}} />
+                  <CustomerCard
+                    customer={activeCustomer}
+                    primaryField={primaryField}
+                    onOpen={() => {}}
+                  />
                 </div>
               )}
             </DragOverlay>
@@ -231,6 +245,7 @@ export default function Board() {
       {selected && (
         <CustomerDetailPanel
           customer={selected}
+          primaryField={primaryField}
           onClose={() => setSelected(null)}
           onUpdated={handleUpdated}
           onDeleted={handleDeleted}

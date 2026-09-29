@@ -395,7 +395,11 @@ function TagsTab() {
 function LinksTab() {
   const { showToast } = useToast();
   const [links, setLinks] = useState<Link[]>([]);
-  const [settings, setSettings] = useState<AppSettings>({ linksEnabled: true, autoCloseDays: 30 });
+  const [settings, setSettings] = useState<AppSettings>({
+    linksEnabled: true,
+    autoCloseDays: 30,
+    customerPrimaryField: "name",
+  });
   const [loading, setLoading] = useState(true);
   const [togglingVisibility, setTogglingVisibility] = useState(false);
 
@@ -679,6 +683,65 @@ function LinksTab() {
   );
 }
 
+function CustomersSettingsTab() {
+  const { showToast } = useToast();
+  const [primaryField, setPrimaryField] = useState<AppSettings["customerPrimaryField"]>("name");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    api<AppSettings>("/api/settings").then((d) => {
+      setPrimaryField(d.customerPrimaryField);
+      setLoading(false);
+    });
+  }, []);
+
+  async function handleSelect(field: AppSettings["customerPrimaryField"]) {
+    if (field === primaryField) return;
+    setSaving(true);
+    try {
+      const next = await api<AppSettings>("/api/settings", {
+        method: "PATCH",
+        body: { customerPrimaryField: field },
+      });
+      setPrimaryField(next.customerPrimaryField);
+      showToast("Beállítás elmentve");
+    } catch {
+      showToast("Nem sikerült menteni a beállítást.", "error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <SettingsCard title="Ügyfelek megjelenítése">
+      <p className="mb-4 max-w-sm text-sm text-ink-500">
+        Mi jelenjen meg elöl, kiemelve az ügyfélkártyákon és a részletező panelen: a
+        név vagy az üzlet neve.
+      </p>
+      <div className="grid max-w-xs grid-cols-2 gap-2">
+        {(["name", "business"] as const).map((f) => (
+          <button
+            key={f}
+            type="button"
+            disabled={loading || saving}
+            onClick={() => handleSelect(f)}
+            className="rounded-lg border px-3 py-2.5 text-sm font-medium transition disabled:opacity-60"
+            style={{
+              borderColor: primaryField === f ? "#3a8a74" : "rgb(var(--ink-100))",
+              backgroundColor:
+                primaryField === f ? "rgb(var(--brand-100))" : "rgb(var(--ink-50))",
+              color: primaryField === f ? "#2f6f5e" : "rgb(var(--ink-700))",
+            }}
+          >
+            {f === "name" ? "Név" : "Üzlet neve"}
+          </button>
+        ))}
+      </div>
+    </SettingsCard>
+  );
+}
+
 function TasksSettingsTab() {
   const { showToast } = useToast();
   const [autoCloseDays, setAutoCloseDays] = useState<string>("30");
@@ -747,7 +810,7 @@ function TasksSettingsTab() {
   );
 }
 
-type Tab = "profil" | "jelszo" | "cimkek" | "linkek" | "feladatok" | "felhasznalok";
+type Tab = "profil" | "jelszo" | "cimkek" | "linkek" | "ugyfelek" | "feladatok" | "felhasznalok";
 
 export function SettingsModal({ onClose }: { onClose: () => void }) {
   useEscapeToClose(onClose);
@@ -760,6 +823,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
     { key: "jelszo", label: "Jelszó" },
     { key: "cimkek", label: "Címkék" },
     { key: "linkek", label: "Linkek" },
+    { key: "ugyfelek", label: "Ügyfelek" },
     { key: "feladatok", label: "Feladatok" },
     ...(isSuperAdmin ? [{ key: "felhasznalok" as Tab, label: "Felhasználók" }] : []),
   ];
@@ -813,6 +877,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
             {tab === "jelszo" && <PasswordTab />}
             {tab === "cimkek" && <TagsTab />}
             {tab === "linkek" && <LinksTab />}
+            {tab === "ugyfelek" && <CustomersSettingsTab />}
             {tab === "feladatok" && <TasksSettingsTab />}
             {tab === "felhasznalok" && isSuperAdmin && (
               <div>

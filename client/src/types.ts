@@ -141,9 +141,12 @@ export interface Link {
   updated_at: string;
 }
 
+export type CustomerPrimaryField = "name" | "business";
+
 export interface AppSettings {
   linksEnabled: boolean;
   autoCloseDays: number;
+  customerPrimaryField: CustomerPrimaryField;
 }
 
 export interface TeamMember {

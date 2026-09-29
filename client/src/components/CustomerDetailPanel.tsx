@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import type { ClosedReason, Comment, Customer, Stage } from "../types";
+import type { AppSettings, ClosedReason, Comment, Customer, Stage } from "../types";
 import { CLOSED_REASONS, STAGES } from "../types";
 import { api } from "../api/client";
 import { ScalePicker } from "./ScalePicker";
@@ -8,11 +8,13 @@ import { useEscapeToClose } from "../hooks/useEscapeToClose";
 
 export function CustomerDetailPanel({
   customer,
+  primaryField,
   onClose,
   onUpdated,
   onDeleted,
 }: {
   customer: Customer;
+  primaryField: AppSettings["customerPrimaryField"];
   onClose: () => void;
   onUpdated: (c: Customer) => void;
   onDeleted: (id: number) => void;
@@ -128,20 +130,37 @@ export function CustomerDetailPanel({
       <aside className="fixed right-0 top-0 z-40 flex h-full w-full max-w-md animate-panel-in flex-col border-l border-ink-100 bg-ink-50 shadow-panel">
         <div className="flex items-center justify-between border-b border-ink-100 bg-surface px-5 py-4">
           <div className="min-w-0 flex-1">
-            <input
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              onBlur={handleFieldBlur}
-              placeholder="Név"
-              className="w-full rounded-md border border-transparent bg-transparent text-lg font-semibold text-ink-950 outline-none transition hover:border-ink-100 focus:border-brand-400 focus:bg-ink-50 focus:px-2 focus:py-1"
-            />
-            <input
-              value={form.business}
-              onChange={(e) => setForm((f) => ({ ...f, business: e.target.value }))}
-              onBlur={handleFieldBlur}
-              placeholder="Üzlet"
-              className="w-full rounded-md border border-transparent bg-transparent text-sm text-ink-500 outline-none transition hover:border-ink-100 focus:border-brand-400 focus:bg-ink-50 focus:px-2 focus:py-0.5"
-            />
+            {[
+              {
+                key: "name",
+                value: form.name,
+                onChange: (v: string) => setForm((f) => ({ ...f, name: v })),
+                placeholder: "Név",
+              },
+              {
+                key: "business",
+                value: form.business,
+                onChange: (v: string) => setForm((f) => ({ ...f, business: v })),
+                placeholder: "Üzlet",
+              },
+            ]
+              .sort((a, b) =>
+                a.key === primaryField ? -1 : b.key === primaryField ? 1 : 0
+              )
+              .map((field, idx) => (
+                <input
+                  key={field.key}
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={handleFieldBlur}
+                  placeholder={field.placeholder}
+                  className={
+                    idx === 0
+                      ? "w-full rounded-md border border-transparent bg-transparent text-lg font-semibold text-ink-950 outline-none transition hover:border-ink-100 focus:border-brand-400 focus:bg-ink-50 focus:px-2 focus:py-1"
+                      : "w-full rounded-md border border-transparent bg-transparent text-sm text-ink-500 outline-none transition hover:border-ink-100 focus:border-brand-400 focus:bg-ink-50 focus:px-2 focus:py-0.5"
+                  }
+                />
+              ))}
             <p className="mt-0.5 text-xs text-ink-500">
               {headerError ? (
                 <span className="text-scale-1">{headerError}</span>
