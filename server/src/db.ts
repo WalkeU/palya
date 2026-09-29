@@ -213,7 +213,17 @@ if (!noteColumns.some((c) => c.name === "position")) {
 
 // Migration: `highlighted` lets a task be flagged as extra-important,
 // rendered with a red-tinted card on the board.
-const taskColumns = db.prepare("PRAGMA table_info(tasks)").all() as ColumnInfo[];
+let taskColumns = db.prepare("PRAGMA table_info(tasks)").all() as ColumnInfo[];
 if (!taskColumns.some((c) => c.name === "highlighted")) {
   db.exec("ALTER TABLE tasks ADD COLUMN highlighted INTEGER NOT NULL DEFAULT 0");
+}
+
+// Migration: `done_at` tracks when a task entered the "done" stage, so a
+// background sweep can auto-close it once it's sat there past the
+// configurable threshold. Backfilled with `updated_at` for tasks already in
+// "done" so long-stale ones start counting immediately instead of resetting.
+taskColumns = db.prepare("PRAGMA table_info(tasks)").all() as ColumnInfo[];
+if (!taskColumns.some((c) => c.name === "done_at")) {
+  db.exec("ALTER TABLE tasks ADD COLUMN done_at TEXT");
+  db.exec("UPDATE tasks SET done_at = updated_at WHERE stage = 'done'");
 }

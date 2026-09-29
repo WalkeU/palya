@@ -55,10 +55,10 @@ export function NewCustomerModal({
         className="fixed inset-0 z-30 bg-night/25 animate-fade-in"
         onClick={onClose}
       />
-      <div className="fixed inset-0 z-40 flex items-center justify-center px-4">
+      <div className="fixed inset-0 z-40 flex items-center justify-center px-4 py-6">
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-md animate-rise-in rounded-2xl border border-ink-100 bg-surface p-6 shadow-panel"
+          className="max-h-full w-full max-w-md animate-rise-in overflow-y-auto rounded-2xl border border-ink-100 bg-surface p-6 shadow-panel"
         >
           <h2 className="mb-4 font-display text-xl font-medium text-ink-950">
             Új ügyfél

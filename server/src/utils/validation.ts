@@ -213,6 +213,7 @@ export const updateLinkSchema = z.object({
 
 export const updateAppSettingsSchema = z.object({
   linksEnabled: z.boolean().optional(),
+  autoCloseDays: z.number().int().min(1).max(365).optional(),
 });
 
 export const changeOwnPasswordSchema = z

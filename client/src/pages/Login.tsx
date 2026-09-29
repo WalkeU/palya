@@ -2,9 +2,11 @@ import { FormEvent, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../api/client";
 import { PasswordInput } from "../components/PasswordInput";
+import { useAppVersion } from "../hooks/useAppVersion";
 
 export default function Login() {
   const { login } = useAuth();
+  const version = useAppVersion();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +88,10 @@ export default function Login() {
             {submitting ? "Belépés…" : "Belépés"}
           </button>
         </form>
+
+        {version && (
+          <p className="mt-6 text-center text-[11px] text-ink-300">v{version}</p>
+        )}
       </div>
     </div>
   );

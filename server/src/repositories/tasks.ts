@@ -118,11 +118,21 @@ export const tasksRepo = {
     const existing = this.findById(id);
     if (!existing) return undefined;
 
+    const nextStage = input.stage ?? existing.stage;
+    const doneAt =
+      nextStage === "done"
+        ? existing.stage === "done"
+          ? undefined // keep whatever done_at already is - don't reset the timer on unrelated edits
+          : "now"
+        : nextStage !== existing.stage
+        ? null // left "done" for something else - stop tracking
+        : undefined;
+
     const merged = {
       title: input.title ?? existing.title,
       description:
         input.description !== undefined ? input.description : existing.description,
-      stage: input.stage ?? existing.stage,
+      stage: nextStage,
       assigneeId:
         input.assignee_id !== undefined ? input.assignee_id : existing.assignee_id,
       position: input.position !== undefined ? input.position : existing.position,
@@ -136,13 +146,24 @@ export const tasksRepo = {
           : 0,
     };
 
-    db.prepare(
-      `UPDATE tasks SET
-        title = @title, description = @description, stage = @stage,
-        assignee_id = @assigneeId, position = @position, highlighted = @highlighted,
-        updated_at = datetime('now')
-       WHERE id = @id`
-    ).run({ ...merged, id });
+    if (doneAt === undefined) {
+      db.prepare(
+        `UPDATE tasks SET
+          title = @title, description = @description, stage = @stage,
+          assignee_id = @assigneeId, position = @position, highlighted = @highlighted,
+          updated_at = datetime('now')
+         WHERE id = @id`
+      ).run({ ...merged, id });
+    } else {
+      db.prepare(
+        `UPDATE tasks SET
+          title = @title, description = @description, stage = @stage,
+          assignee_id = @assigneeId, position = @position, highlighted = @highlighted,
+          done_at = ${doneAt === "now" ? "datetime('now')" : "NULL"},
+          updated_at = datetime('now')
+         WHERE id = @id`
+      ).run({ ...merged, id });
+    }
 
     if (input.tag_ids !== undefined) {
       tagsRepo.setTaskTags(id, input.tag_ids);
@@ -152,15 +173,51 @@ export const tasksRepo = {
   },
 
   reorder(stage: TaskStage, orderedIds: number[]) {
-    const stmt = db.prepare(
+    const getStage = db.prepare("SELECT stage FROM tasks WHERE id = ?");
+    const stmtSame = db.prepare(
       "UPDATE tasks SET position = ?, stage = ?, updated_at = datetime('now') WHERE id = ?"
+    );
+    const stmtToDone = db.prepare(
+      "UPDATE tasks SET position = ?, stage = ?, done_at = datetime('now'), updated_at = datetime('now') WHERE id = ?"
+    );
+    const stmtFromDone = db.prepare(
+      "UPDATE tasks SET position = ?, stage = ?, done_at = NULL, updated_at = datetime('now') WHERE id = ?"
     );
     const tx = db.transaction((ids: number[]) => {
       ids.forEach((id, index) => {
-        stmt.run(index, stage, id);
+        const row = getStage.get(id) as { stage: TaskStage } | undefined;
+        const prevStage = row?.stage;
+        if (stage === "done" && prevStage !== "done") {
+          stmtToDone.run(index, stage, id);
+        } else if (stage !== "done" && prevStage === "done") {
+          stmtFromDone.run(index, stage, id);
+        } else {
+          stmtSame.run(index, stage, id);
+        }
       });
     });
     tx(orderedIds);
+  },
+
+  // Sweeps tasks that have sat in "done" past the configurable threshold
+  // (app_settings.autoCloseDays) into "closed" - called periodically from
+  // index.ts. Restorable via the normal "Visszaállítás" flow.
+  autoCloseStale(days: number): number {
+    const rows = db
+      .prepare(
+        "SELECT id FROM tasks WHERE stage = 'done' AND done_at IS NOT NULL AND done_at <= datetime('now', ?)"
+      )
+      .all(`-${days} days`) as { id: number }[];
+    if (rows.length === 0) return 0;
+    const startPos = this.nextPosition("closed");
+    const stmt = db.prepare(
+      "UPDATE tasks SET stage = 'closed', position = ?, done_at = NULL, updated_at = datetime('now') WHERE id = ?"
+    );
+    const tx = db.transaction((items: { id: number }[]) => {
+      items.forEach((r, idx) => stmt.run(startPos + idx, r.id));
+    });
+    tx(rows);
+    return rows.length;
   },
 
   remove(id: number) {

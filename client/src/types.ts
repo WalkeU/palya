@@ -143,6 +143,7 @@ export interface Link {
 
 export interface AppSettings {
   linksEnabled: boolean;
+  autoCloseDays: number;
 }
 
 export interface TeamMember {

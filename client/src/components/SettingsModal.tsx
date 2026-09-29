@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
+import { useAppVersion } from "../hooks/useAppVersion";
 import { api, ApiError } from "../api/client";
 import type { AppSettings, Link, Tag, User } from "../types";
 import { TAG_COLORS } from "../types";
@@ -51,6 +52,7 @@ function SettingsCard({ title, children }: { title: string; children: React.Reac
 function ProfileTab() {
   const { user, setUser } = useAuth();
   const { theme, setTheme } = useTheme();
+  const version = useAppVersion();
   const [nickname, setNickname] = useState(user?.nickname || "");
   const [avatar, setAvatar] = useState<string | null>(user?.avatar || null);
   const [submitting, setSubmitting] = useState(false);
@@ -185,6 +187,10 @@ function ProfileTab() {
           ))}
         </div>
       </SettingsCard>
+
+      {version && (
+        <p className="text-center text-[11px] text-ink-300">Pálya v{version}</p>
+      )}
     </div>
   );
 }
@@ -389,7 +395,7 @@ function TagsTab() {
 function LinksTab() {
   const { showToast } = useToast();
   const [links, setLinks] = useState<Link[]>([]);
-  const [settings, setSettings] = useState<AppSettings>({ linksEnabled: true });
+  const [settings, setSettings] = useState<AppSettings>({ linksEnabled: true, autoCloseDays: 30 });
   const [loading, setLoading] = useState(true);
   const [togglingVisibility, setTogglingVisibility] = useState(false);
 
@@ -673,7 +679,75 @@ function LinksTab() {
   );
 }
 
-type Tab = "profil" | "jelszo" | "cimkek" | "linkek" | "felhasznalok";
+function TasksSettingsTab() {
+  const { showToast } = useToast();
+  const [autoCloseDays, setAutoCloseDays] = useState<string>("30");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    api<AppSettings>("/api/settings").then((d) => {
+      setAutoCloseDays(String(d.autoCloseDays));
+      setLoading(false);
+    });
+  }, []);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    const days = Number(autoCloseDays);
+    if (!Number.isInteger(days) || days < 1 || days > 365) {
+      showToast("A napok száma 1 és 365 között lehet.", "error");
+      return;
+    }
+    setSaving(true);
+    try {
+      const next = await api<AppSettings>("/api/settings", {
+        method: "PATCH",
+        body: { autoCloseDays: days },
+      });
+      setAutoCloseDays(String(next.autoCloseDays));
+      showToast("Beállítás elmentve");
+    } catch {
+      showToast("Nem sikerült menteni a beállítást.", "error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <SettingsCard title="Feladatok automatikus lezárása">
+      <p className="mb-4 max-w-sm text-sm text-ink-500">
+        A "Done" fázisban ennyi napig veszteglő feladat automatikusan átkerül a
+        Lezárva közé. Onnan bármikor visszahozható.
+      </p>
+      <form onSubmit={handleSubmit} className="flex items-end gap-2">
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
+            Napok száma
+          </label>
+          <input
+            type="number"
+            min={1}
+            max={365}
+            disabled={loading}
+            value={autoCloseDays}
+            onChange={(e) => setAutoCloseDays(e.target.value)}
+            className="w-24 rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-surface focus:ring-2 focus:ring-brand-100"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={saving || loading}
+          className="rounded-lg bg-night px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600 disabled:opacity-60"
+        >
+          {saving ? "Mentés…" : "Mentés"}
+        </button>
+      </form>
+    </SettingsCard>
+  );
+}
+
+type Tab = "profil" | "jelszo" | "cimkek" | "linkek" | "feladatok" | "felhasznalok";
 
 export function SettingsModal({ onClose }: { onClose: () => void }) {
   useEscapeToClose(onClose);
@@ -686,6 +760,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
     { key: "jelszo", label: "Jelszó" },
     { key: "cimkek", label: "Címkék" },
     { key: "linkek", label: "Linkek" },
+    { key: "feladatok", label: "Feladatok" },
     ...(isSuperAdmin ? [{ key: "felhasznalok" as Tab, label: "Felhasználók" }] : []),
   ];
 
@@ -738,6 +813,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
             {tab === "jelszo" && <PasswordTab />}
             {tab === "cimkek" && <TagsTab />}
             {tab === "linkek" && <LinksTab />}
+            {tab === "feladatok" && <TasksSettingsTab />}
             {tab === "felhasznalok" && isSuperAdmin && (
               <div>
                 <h2 className="mb-4 font-display text-lg font-medium text-ink-950">
