@@ -495,7 +495,11 @@ export default function Home() {
   const version = useAppVersion();
   const [notes, setNotes] = useState<Note[]>([]);
   const [links, setLinks] = useState<Link[]>([]);
-  const [settings, setSettings] = useState<AppSettings>({ linksEnabled: true, autoCloseDays: 30 });
+  const [settings, setSettings] = useState<AppSettings>({
+    linksEnabled: true,
+    autoCloseDays: 30,
+    customerPrimaryField: "name",
+  });
   const [loading, setLoading] = useState(true);
   const [composing, setComposing] = useState(false);
   const [activeId, setActiveId] = useState<number | null>(null);

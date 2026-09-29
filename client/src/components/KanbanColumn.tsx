@@ -1,6 +1,6 @@
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import type { Customer, Stage } from "../types";
+import type { AppSettings, Customer, Stage } from "../types";
 import { CustomerCard } from "./CustomerCard";
 
 export function KanbanColumn({
@@ -8,12 +8,14 @@ export function KanbanColumn({
   label,
   accent,
   customers,
+  primaryField,
   onOpenCustomer,
 }: {
   stage: Stage;
   label: string;
   accent: string;
   customers: Customer[];
+  primaryField: AppSettings["customerPrimaryField"];
   onOpenCustomer: (c: Customer) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
@@ -47,6 +49,7 @@ export function KanbanColumn({
             <CustomerCard
               key={c.id}
               customer={c}
+              primaryField={primaryField}
               onOpen={() => onOpenCustomer(c)}
             />
           ))}
