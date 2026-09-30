@@ -1,6 +1,7 @@
 # TODO
 
 ## Nyitott
+- [ ] Jegyzet törlésénél (kihúzás a kukába) legyen vizuálisabb figyelmeztetés - pl. piros legyen maga a jegyzet/kártya is, amikor a kuka fölé húzzák, hogy egyértelmű legyen a törlés előtt
 
 ## Done
 - [x] 2026-09-29 - Kereső a feladatok között név alapján
