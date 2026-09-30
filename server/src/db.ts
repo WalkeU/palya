@@ -104,15 +104,6 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
-  CREATE TABLE IF NOT EXISTS subtasks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
-    text TEXT NOT NULL,
-    completed INTEGER NOT NULL DEFAULT 0,
-    position INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-
   CREATE TABLE IF NOT EXISTS poll_options (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
@@ -146,7 +137,6 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_comments_customer ON comments(customer_id);
   CREATE INDEX IF NOT EXISTS idx_tasks_stage ON tasks(stage);
   CREATE INDEX IF NOT EXISTS idx_task_comments_task ON task_comments(task_id);
-  CREATE INDEX IF NOT EXISTS idx_subtasks_task ON subtasks(task_id);
 `);
 
 // Migration: `business` column and `name` becoming nullable were added
@@ -236,4 +226,16 @@ taskColumns = db.prepare("PRAGMA table_info(tasks)").all() as ColumnInfo[];
 if (!taskColumns.some((c) => c.name === "done_at")) {
   db.exec("ALTER TABLE tasks ADD COLUMN done_at TEXT");
   db.exec("UPDATE tasks SET done_at = updated_at WHERE stage = 'done'");
+}
+
+// Migration: `parent_task_id` lets a task be a subtask of another task -
+// subtasks are full tasks (their own stage, draggable across columns like
+// any other card), just carrying a link back to their parent, shown as a
+// label on the card. No REFERENCES clause here (kept consistent with the
+// other ALTER TABLE migrations above) - cascading delete of subtasks when
+// the parent is removed is handled in tasksRepo.remove() instead.
+taskColumns = db.prepare("PRAGMA table_info(tasks)").all() as ColumnInfo[];
+if (!taskColumns.some((c) => c.name === "parent_task_id")) {
+  db.exec("ALTER TABLE tasks ADD COLUMN parent_task_id INTEGER");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_parent ON tasks(parent_task_id)");
 }

@@ -84,15 +84,6 @@ export const TAG_COLORS = [
   "#c15b8c",
 ] as const;
 
-export interface Subtask {
-  id: number;
-  task_id: number;
-  text: string;
-  completed: boolean;
-  position: number;
-  created_at: string;
-}
-
 export interface Task {
   id: number;
   title: string;
@@ -111,7 +102,10 @@ export interface Task {
   created_at: string;
   updated_at: string;
   tags: Tag[];
-  subtasks: Subtask[];
+  parent_task_id: number | null;
+  parent_title: string | null;
+  subtask_count: number;
+  subtask_done_count: number;
   comment_count: number;
 }
 

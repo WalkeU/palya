@@ -6,7 +6,18 @@ import { TagChip } from "./TagChip";
 import { AssigneePicker } from "./AssigneePicker";
 import { Avatar } from "./Avatar";
 import { CommentList } from "./CommentList";
+import { NewTaskModal } from "./NewTaskModal";
 import { useEscapeToClose } from "../hooks/useEscapeToClose";
+
+const STAGE_ACCENT: Record<TaskStage, string> = {
+  backlog: "#9aa0aa",
+  todo: "#6b7cae",
+  in_progress: "#d99a3d",
+  blocked: "#c85a4a",
+  waiting_review: "#7c6bb0",
+  done: "#3a8a74",
+  closed: "#6b7280",
+};
 
 function formatDateTime(iso: string): string {
   return new Date(iso + "Z").toLocaleString("hu-HU", {
@@ -21,15 +32,21 @@ function formatDateTime(iso: string): string {
 export function TaskDetailPanel({
   task,
   members,
+  allTasks,
   onClose,
   onUpdated,
   onDeleted,
+  onTaskCreated,
+  onOpenTask,
 }: {
   task: Task;
   members: TeamMember[];
+  allTasks: Task[];
   onClose: () => void;
   onUpdated: (t: Task) => void;
   onDeleted: (id: number) => void;
+  onTaskCreated: (t: Task) => void;
+  onOpenTask: (t: Task) => void;
 }) {
   useEscapeToClose(onClose);
   const [form, setForm] = useState({
@@ -48,8 +65,7 @@ export function TaskDetailPanel({
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [postingComment, setPostingComment] = useState(false);
-  const [newSubtask, setNewSubtask] = useState("");
-  const [postingSubtask, setPostingSubtask] = useState(false);
+  const [addingSubtask, setAddingSubtask] = useState(false);
   const titleRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -149,37 +165,7 @@ export function TaskDetailPanel({
     }
   }
 
-  async function handleSubmitSubtask(e: FormEvent) {
-    e.preventDefault();
-    if (!newSubtask.trim()) return;
-    setPostingSubtask(true);
-    try {
-      const data = await api<{ task: Task }>(`/api/tasks/${task.id}/subtasks`, {
-        method: "POST",
-        body: { text: newSubtask.trim() },
-      });
-      onUpdated(data.task);
-      setNewSubtask("");
-    } finally {
-      setPostingSubtask(false);
-    }
-  }
-
-  async function handleToggleSubtask(subtask: Task["subtasks"][number]) {
-    const data = await api<{ task: Task }>(
-      `/api/tasks/${task.id}/subtasks/${subtask.id}`,
-      { method: "PATCH", body: { completed: !subtask.completed } }
-    );
-    onUpdated(data.task);
-  }
-
-  async function handleDeleteSubtask(subtaskId: number) {
-    const data = await api<{ task: Task }>(
-      `/api/tasks/${task.id}/subtasks/${subtaskId}`,
-      { method: "DELETE" }
-    );
-    onUpdated(data.task);
-  }
+  const children = allTasks.filter((t) => t.parent_task_id === task.id);
 
   return (
     <>
@@ -382,89 +368,47 @@ export function TaskDetailPanel({
           <section className="mb-5">
             <span className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-ink-500">
               Alfeladatok
-              {task.subtasks.length > 0 && (
+              {children.length > 0 && (
                 <span className="normal-case tracking-normal text-ink-500">
-                  {task.subtasks.filter((s) => s.completed).length}/{task.subtasks.length}
+                  {children.filter((c) => c.stage === "done" || c.stage === "closed").length}/
+                  {children.length}
                 </span>
               )}
             </span>
             <div className="space-y-1">
-              {task.subtasks.map((s) => (
-                <div
-                  key={s.id}
-                  className="group flex items-center gap-2 rounded-lg px-1 py-1 transition hover:bg-ink-100/60"
+              {children.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => onOpenTask(c)}
+                  className="flex w-full items-center gap-2 rounded-lg px-1 py-1.5 text-left transition hover:bg-ink-100/60"
                 >
-                  <button
-                    type="button"
-                    onClick={() => handleToggleSubtask(s)}
-                    aria-label={s.completed ? "Alfeladat visszajelölése" : "Alfeladat kész"}
-                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded border"
-                    style={{
-                      borderColor: s.completed ? "#3a8a74" : "rgb(var(--ink-300))",
-                      backgroundColor: s.completed ? "#3a8a74" : "transparent",
-                    }}
-                  >
-                    {s.completed && (
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M5 13l4 4L19 7"
-                          stroke="white"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    )}
-                  </button>
+                  <span
+                    className="h-1.5 w-1.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: STAGE_ACCENT[c.stage] }}
+                  />
                   <span
                     className={`min-w-0 flex-1 truncate text-sm ${
-                      s.completed ? "text-ink-500 line-through" : "text-ink-900"
+                      c.stage === "done" || c.stage === "closed"
+                        ? "text-ink-500 line-through"
+                        : "text-ink-900"
                     }`}
                   >
-                    {s.text}
+                    {c.title}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteSubtask(s.id)}
-                    aria-label="Alfeladat törlése"
-                    className="hidden shrink-0 text-ink-500 transition hover:text-scale-1 group-hover:block"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M6 6l12 12M18 6L6 18"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </button>
-                </div>
+                  {c.assignee_id && (
+                    <Avatar
+                      avatar={c.assignee_avatar}
+                      name={c.assignee_nickname || c.assignee_email}
+                      size={18}
+                    />
+                  )}
+                </button>
               ))}
+              {children.length === 0 && (
+                <p className="text-sm text-ink-500">Még nincs egy alfeladat sem.</p>
+              )}
             </div>
-            <form onSubmit={handleSubmitSubtask} className="mt-2 flex items-center gap-2">
-              <input
-                value={newSubtask}
-                onChange={(e) => setNewSubtask(e.target.value)}
-                placeholder="Új alfeladat…"
-                className="flex-1 rounded-lg border border-ink-100 bg-surface px-3 py-1.5 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
-              />
-              <button
-                type="submit"
-                disabled={postingSubtask || !newSubtask.trim()}
-                aria-label="Hozzáadás"
-                title="Hozzáadás"
-                className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg bg-night text-white transition hover:bg-brand-600 disabled:opacity-50"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M12 5v14M5 12h14"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
-            </form>
           </section>
 
           <section>
@@ -512,15 +456,39 @@ export function TaskDetailPanel({
             ) : (
               <span />
             )}
-            <button
-              onClick={handleDelete}
-              className="shrink-0 text-xs font-medium text-ink-500 transition hover:text-scale-1"
-            >
-              Feladat törlése
-            </button>
+            <div className="flex shrink-0 items-center gap-3">
+              <button
+                onClick={() => setAddingSubtask(true)}
+                className="text-xs font-medium text-ink-500 transition hover:text-ink-900"
+              >
+                + Alfeladat
+              </button>
+              <button
+                onClick={handleDelete}
+                className="text-xs font-medium text-ink-500 transition hover:text-scale-1"
+              >
+                Feladat törlése
+              </button>
+            </div>
           </div>
         </div>
       </aside>
+
+      {addingSubtask && (
+        <NewTaskModal
+          members={members}
+          defaultStage="todo"
+          allowStagePicker
+          parentTaskId={task.id}
+          parentTaskTitle={task.title}
+          onClose={() => setAddingSubtask(false)}
+          onCreated={(created) => {
+            onTaskCreated(created);
+            onUpdated({ ...task, subtask_count: task.subtask_count + 1 });
+            setAddingSubtask(false);
+          }}
+        />
+      )}
     </>
   );
 }

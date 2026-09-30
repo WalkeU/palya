@@ -85,15 +85,7 @@ export const createTaskSchema = z.object({
   stage: taskStageEnum.default("backlog"),
   assignee_id: z.number().int().nullable().optional(),
   tag_ids: tagIdsField,
-});
-
-export const createSubtaskSchema = z.object({
-  text: z.string().trim().min(1, "Az alfeladat szövege nem lehet üres").max(300),
-});
-
-export const updateSubtaskSchema = z.object({
-  text: z.string().trim().min(1).max(300).optional(),
-  completed: z.boolean().optional(),
+  parent_task_id: z.number().int().nullable().optional(),
 });
 
 export const updateTaskSchema = z.object({

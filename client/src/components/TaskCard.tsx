@@ -33,6 +33,20 @@ export function TaskCard({
           : "border-ink-100 bg-surface"
       }`}
     >
+      {task.parent_task_id && task.parent_title && (
+        <p className="mb-1 flex items-center gap-1 truncate text-[11px] font-medium text-ink-500">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" className="shrink-0">
+            <path
+              d="M9 6l6 6-6 6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span className="truncate">{task.parent_title}</span>
+        </p>
+      )}
       <div className="mb-1.5 flex items-start justify-between gap-2">
         <h3 className="min-w-0 flex-1 truncate text-sm font-semibold leading-snug text-ink-950">
           {task.title}
@@ -58,9 +72,9 @@ export function TaskCard({
         </div>
       )}
 
-      {(!!task.comment_count || task.subtasks.length > 0) && (
+      {(!!task.comment_count || task.subtask_count > 0) && (
         <div className="mt-2 flex items-center gap-3 text-[11px] text-ink-500">
-          {task.subtasks.length > 0 && (
+          {task.subtask_count > 0 && (
             <div className="flex items-center gap-1">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                 <path
@@ -71,7 +85,7 @@ export function TaskCard({
                   strokeLinejoin="round"
                 />
               </svg>
-              {task.subtasks.filter((s) => s.completed).length}/{task.subtasks.length}
+              {task.subtask_done_count}/{task.subtask_count}
             </div>
           )}
           {!!task.comment_count && (

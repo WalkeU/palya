@@ -10,12 +10,16 @@ export function NewTaskModal({
   members,
   defaultStage,
   allowStagePicker,
+  parentTaskId,
+  parentTaskTitle,
   onClose,
   onCreated,
 }: {
   members: TeamMember[];
   defaultStage: TaskStage;
   allowStagePicker: boolean;
+  parentTaskId?: number;
+  parentTaskTitle?: string;
   onClose: () => void;
   onCreated: (t: Task) => void;
 }) {
@@ -56,6 +60,7 @@ export function NewTaskModal({
           assignee_id: assigneeId ? Number(assigneeId) : null,
           stage,
           tag_ids: selectedTagIds,
+          parent_task_id: parentTaskId ?? null,
         },
       });
       onCreated(data.task);
@@ -77,9 +82,14 @@ export function NewTaskModal({
           onSubmit={handleSubmit}
           className="max-h-full w-full max-w-md animate-rise-in overflow-y-auto rounded-2xl border border-ink-100 bg-surface p-6 shadow-panel"
         >
-          <h2 className="mb-4 font-display text-xl font-medium text-ink-950">
-            Új feladat
-          </h2>
+          <div className="mb-4">
+            <h2 className="font-display text-xl font-medium text-ink-950">
+              {parentTaskTitle ? "Új alfeladat" : "Új feladat"}
+            </h2>
+            {parentTaskTitle && (
+              <p className="mt-0.5 text-xs text-ink-500">Ehhez: {parentTaskTitle}</p>
+            )}
+          </div>
 
           <div className="mb-3.5">
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">

@@ -1,6 +1,5 @@
 import { db } from "../db";
 import { tagsRepo, type Tag } from "./tags";
-import { subtasksRepo, type Subtask } from "./subtasks";
 
 export type TaskStage =
   | "backlog"
@@ -29,7 +28,10 @@ export interface Task {
   created_at: string;
   updated_at: string;
   tags: Tag[];
-  subtasks: Subtask[];
+  parent_task_id: number | null;
+  parent_title: string | null;
+  subtask_count: number;
+  subtask_done_count: number;
   comment_count: number;
 }
 
@@ -39,6 +41,7 @@ export interface TaskInput {
   stage: TaskStage;
   assignee_id?: number | null;
   tag_ids?: number[];
+  parent_task_id?: number | null;
 }
 
 export interface TaskUpdateInput {
@@ -54,20 +57,22 @@ export interface TaskUpdateInput {
 const SELECT_TASK = `
   SELECT t.*, u.nickname as assignee_nickname, u.email as assignee_email, u.avatar as assignee_avatar,
          c.nickname as creator_nickname, c.email as creator_email, c.avatar as creator_avatar,
-         (SELECT COUNT(*) FROM task_comments WHERE task_comments.task_id = t.id) as comment_count
+         p.title as parent_title,
+         (SELECT COUNT(*) FROM task_comments WHERE task_comments.task_id = t.id) as comment_count,
+         (SELECT COUNT(*) FROM tasks st WHERE st.parent_task_id = t.id) as subtask_count,
+         (SELECT COUNT(*) FROM tasks st WHERE st.parent_task_id = t.id AND st.stage IN ('done', 'closed')) as subtask_done_count
   FROM tasks t
   LEFT JOIN users u ON u.id = t.assignee_id
   LEFT JOIN users c ON c.id = t.created_by
+  LEFT JOIN tasks p ON p.id = t.parent_task_id
 `;
 
-function attachExtras(tasks: Omit<Task, "tags" | "subtasks">[]): Task[] {
+function attachTags(tasks: Omit<Task, "tags">[]): Task[] {
   const tagsByTask = tagsRepo.listForTasks(tasks.map((t) => t.id));
-  const subtasksByTask = subtasksRepo.listForTasks(tasks.map((t) => t.id));
   return tasks.map((t) => ({
     ...t,
     highlighted: !!t.highlighted,
     tags: tagsByTask.get(t.id) ?? [],
-    subtasks: subtasksByTask.get(t.id) ?? [],
   }));
 }
 
@@ -75,16 +80,16 @@ export const tasksRepo = {
   list(): Task[] {
     const rows = db
       .prepare(`${SELECT_TASK} ORDER BY t.stage, t.position ASC, t.id ASC`)
-      .all() as Omit<Task, "tags" | "subtasks">[];
-    return attachExtras(rows);
+      .all() as Omit<Task, "tags">[];
+    return attachTags(rows);
   },
 
   findById(id: number): Task | undefined {
     const row = db.prepare(`${SELECT_TASK} WHERE t.id = ?`).get(id) as
-      | Omit<Task, "tags" | "subtasks">
+      | Omit<Task, "tags">
       | undefined;
     if (!row) return undefined;
-    return attachExtras([row])[0];
+    return attachTags([row])[0];
   },
 
   nextPosition(stage: TaskStage): number {
@@ -100,8 +105,8 @@ export const tasksRepo = {
     const position = this.nextPosition(input.stage);
     const info = db
       .prepare(
-        `INSERT INTO tasks (title, description, stage, assignee_id, position, created_by)
-         VALUES (@title, @description, @stage, @assigneeId, @position, @createdBy)`
+        `INSERT INTO tasks (title, description, stage, assignee_id, position, created_by, parent_task_id)
+         VALUES (@title, @description, @stage, @assigneeId, @position, @createdBy, @parentTaskId)`
       )
       .run({
         title: input.title,
@@ -110,6 +115,7 @@ export const tasksRepo = {
         assigneeId: input.assignee_id ?? null,
         position,
         createdBy,
+        parentTaskId: input.parent_task_id ?? null,
       });
     const id = info.lastInsertRowid as number;
     if (input.tag_ids) {
@@ -224,7 +230,14 @@ export const tasksRepo = {
     return rows.length;
   },
 
+  // `parent_task_id` has no REFERENCES clause (see the db.ts migration
+  // comment), so SQLite won't cascade-delete subtasks on its own - walk the
+  // tree here instead.
   remove(id: number) {
+    const children = db
+      .prepare("SELECT id FROM tasks WHERE parent_task_id = ?")
+      .all(id) as { id: number }[];
+    for (const child of children) this.remove(child.id);
     db.prepare("DELETE FROM tasks WHERE id = ?").run(id);
   },
 };

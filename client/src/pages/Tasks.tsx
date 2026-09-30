@@ -396,9 +396,12 @@ export default function Tasks() {
         <TaskDetailPanel
           task={selected}
           members={members}
+          allTasks={tasks}
           onClose={() => setSelected(null)}
           onUpdated={handleUpdated}
           onDeleted={handleDeleted}
+          onTaskCreated={(t) => setTasks((prev) => [...prev, t])}
+          onOpenTask={setSelected}
         />
       )}
 
