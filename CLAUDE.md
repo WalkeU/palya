@@ -57,3 +57,5 @@ Re-query `cols` between sequential migrations touching the same table. Changing 
 ## Git workflow
 
 This repo follows a **dev → main** convention (not GitHub flow): `dev` is the integration branch for all work; `main` only moves via an explicit release merge (`git merge --no-ff dev`) tagged `vX.Y.Z`. `CHANGELOG.md` is a flat, reverse-chronological list under a permanent `[Unreleased]` header - one line per merged change, prepended; a release inserts a `- YYYY-MM-DD release vX.Y.Z` marker line rather than using Keep-a-Changelog-style sections. `TODO.md` tracks forward-looking work items separately (`## Nyitott` / `## Done`) and is only updated when explicitly asked. Only commit or push when the user explicitly asks for it.
+
+**Production deploys from `main` only** - the server pulls `main` and rebuilds Docker from it, never `dev`. Pushing to `dev` is safe at any time and has no effect on the live app. Do **not** cut a release (merge `dev` into `main`, bump version, tag) unless the user explicitly asks for one - work sitting on `dev` is expected to stay unreleased/undeployed until then, potentially across many turns.
