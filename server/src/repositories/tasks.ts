@@ -1,5 +1,6 @@
 import { db } from "../db";
 import { tagsRepo, type Tag } from "./tags";
+import { subtasksRepo, type Subtask } from "./subtasks";
 
 export type TaskStage =
   | "backlog"
@@ -28,6 +29,7 @@ export interface Task {
   created_at: string;
   updated_at: string;
   tags: Tag[];
+  subtasks: Subtask[];
   comment_count: number;
 }
 
@@ -58,12 +60,14 @@ const SELECT_TASK = `
   LEFT JOIN users c ON c.id = t.created_by
 `;
 
-function attachTags(tasks: Omit<Task, "tags">[]): Task[] {
+function attachExtras(tasks: Omit<Task, "tags" | "subtasks">[]): Task[] {
   const tagsByTask = tagsRepo.listForTasks(tasks.map((t) => t.id));
+  const subtasksByTask = subtasksRepo.listForTasks(tasks.map((t) => t.id));
   return tasks.map((t) => ({
     ...t,
     highlighted: !!t.highlighted,
     tags: tagsByTask.get(t.id) ?? [],
+    subtasks: subtasksByTask.get(t.id) ?? [],
   }));
 }
 
@@ -71,16 +75,16 @@ export const tasksRepo = {
   list(): Task[] {
     const rows = db
       .prepare(`${SELECT_TASK} ORDER BY t.stage, t.position ASC, t.id ASC`)
-      .all() as Omit<Task, "tags">[];
-    return attachTags(rows);
+      .all() as Omit<Task, "tags" | "subtasks">[];
+    return attachExtras(rows);
   },
 
   findById(id: number): Task | undefined {
     const row = db.prepare(`${SELECT_TASK} WHERE t.id = ?`).get(id) as
-      | Omit<Task, "tags">
+      | Omit<Task, "tags" | "subtasks">
       | undefined;
     if (!row) return undefined;
-    return attachTags([row])[0];
+    return attachExtras([row])[0];
   },
 
   nextPosition(stage: TaskStage): number {

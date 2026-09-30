@@ -48,6 +48,8 @@ export function TaskDetailPanel({
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [postingComment, setPostingComment] = useState(false);
+  const [newSubtask, setNewSubtask] = useState("");
+  const [postingSubtask, setPostingSubtask] = useState(false);
   const titleRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -145,6 +147,38 @@ export function TaskDetailPanel({
     } finally {
       setPostingComment(false);
     }
+  }
+
+  async function handleSubmitSubtask(e: FormEvent) {
+    e.preventDefault();
+    if (!newSubtask.trim()) return;
+    setPostingSubtask(true);
+    try {
+      const data = await api<{ task: Task }>(`/api/tasks/${task.id}/subtasks`, {
+        method: "POST",
+        body: { text: newSubtask.trim() },
+      });
+      onUpdated(data.task);
+      setNewSubtask("");
+    } finally {
+      setPostingSubtask(false);
+    }
+  }
+
+  async function handleToggleSubtask(subtask: Task["subtasks"][number]) {
+    const data = await api<{ task: Task }>(
+      `/api/tasks/${task.id}/subtasks/${subtask.id}`,
+      { method: "PATCH", body: { completed: !subtask.completed } }
+    );
+    onUpdated(data.task);
+  }
+
+  async function handleDeleteSubtask(subtaskId: number) {
+    const data = await api<{ task: Task }>(
+      `/api/tasks/${task.id}/subtasks/${subtaskId}`,
+      { method: "DELETE" }
+    );
+    onUpdated(data.task);
   }
 
   return (
@@ -343,6 +377,94 @@ export function TaskDetailPanel({
                 </button>
               </div>
             </div>
+          </section>
+
+          <section className="mb-5">
+            <span className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-ink-500">
+              Alfeladatok
+              {task.subtasks.length > 0 && (
+                <span className="normal-case tracking-normal text-ink-500">
+                  {task.subtasks.filter((s) => s.completed).length}/{task.subtasks.length}
+                </span>
+              )}
+            </span>
+            <div className="space-y-1">
+              {task.subtasks.map((s) => (
+                <div
+                  key={s.id}
+                  className="group flex items-center gap-2 rounded-lg px-1 py-1 transition hover:bg-ink-100/60"
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleToggleSubtask(s)}
+                    aria-label={s.completed ? "Alfeladat visszajelölése" : "Alfeladat kész"}
+                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded border"
+                    style={{
+                      borderColor: s.completed ? "#3a8a74" : "rgb(var(--ink-300))",
+                      backgroundColor: s.completed ? "#3a8a74" : "transparent",
+                    }}
+                  >
+                    {s.completed && (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                        <path
+                          d="M5 13l4 4L19 7"
+                          stroke="white"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                  <span
+                    className={`min-w-0 flex-1 truncate text-sm ${
+                      s.completed ? "text-ink-500 line-through" : "text-ink-900"
+                    }`}
+                  >
+                    {s.text}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteSubtask(s.id)}
+                    aria-label="Alfeladat törlése"
+                    className="hidden shrink-0 text-ink-500 transition hover:text-scale-1 group-hover:block"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M6 6l12 12M18 6L6 18"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+            <form onSubmit={handleSubmitSubtask} className="mt-2 flex items-center gap-2">
+              <input
+                value={newSubtask}
+                onChange={(e) => setNewSubtask(e.target.value)}
+                placeholder="Új alfeladat…"
+                className="flex-1 rounded-lg border border-ink-100 bg-surface px-3 py-1.5 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+              />
+              <button
+                type="submit"
+                disabled={postingSubtask || !newSubtask.trim()}
+                aria-label="Hozzáadás"
+                title="Hozzáadás"
+                className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg bg-night text-white transition hover:bg-brand-600 disabled:opacity-50"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M12 5v14M5 12h14"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </form>
           </section>
 
           <section>

@@ -87,6 +87,15 @@ export const createTaskSchema = z.object({
   tag_ids: tagIdsField,
 });
 
+export const createSubtaskSchema = z.object({
+  text: z.string().trim().min(1, "Az alfeladat szövege nem lehet üres").max(300),
+});
+
+export const updateSubtaskSchema = z.object({
+  text: z.string().trim().min(1).max(300).optional(),
+  completed: z.boolean().optional(),
+});
+
 export const updateTaskSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
   description: z.string().trim().max(5000).nullable().optional(),

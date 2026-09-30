@@ -104,6 +104,15 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS subtasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    text TEXT NOT NULL,
+    completed INTEGER NOT NULL DEFAULT 0,
+    position INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
   CREATE TABLE IF NOT EXISTS poll_options (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
@@ -137,6 +146,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_comments_customer ON comments(customer_id);
   CREATE INDEX IF NOT EXISTS idx_tasks_stage ON tasks(stage);
   CREATE INDEX IF NOT EXISTS idx_task_comments_task ON task_comments(task_id);
+  CREATE INDEX IF NOT EXISTS idx_subtasks_task ON subtasks(task_id);
 `);
 
 // Migration: `business` column and `name` becoming nullable were added
