@@ -25,6 +25,7 @@ RUN cd server && npm ci --omit=dev
 
 COPY --from=server-build /app/server/dist ./server/dist
 COPY --from=client-build /app/client-dist ./client-dist
+COPY CHANGELOG.md ./CHANGELOG.md
 
 RUN mkdir -p /app/data
 

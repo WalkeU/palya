@@ -19,6 +19,7 @@ import { notesRouter } from "./routes/notes";
 import { linksRouter } from "./routes/links";
 import { settingsRouter } from "./routes/settings";
 import { versionRouter } from "./routes/version";
+import { changelogRouter } from "./routes/changelog";
 import { tasksRepo } from "./repositories/tasks";
 import { appSettingsRepo } from "./repositories/appSettings";
 
@@ -108,6 +109,7 @@ app.use("/api/notes", notesRouter);
 app.use("/api/links", linksRouter);
 app.use("/api/settings", settingsRouter);
 app.use("/api/version", versionRouter);
+app.use("/api/changelog", changelogRouter);
 
 // Auto-close "done" tasks that have sat there past the configurable
 // threshold (settable in Beállítások) - runs on boot, then every 6 hours.

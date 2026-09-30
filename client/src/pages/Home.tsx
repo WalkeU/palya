@@ -7,6 +7,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
@@ -503,6 +504,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [composing, setComposing] = useState(false);
   const [activeId, setActiveId] = useState<number | null>(null);
+  const [overTrash, setOverTrash] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -513,9 +515,14 @@ export default function Home() {
     setActiveId(event.active.id as number);
   }
 
+  function handleDragOver(event: DragOverEvent) {
+    setOverTrash(event.over?.id === "trash");
+  }
+
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     setActiveId(null);
+    setOverTrash(false);
     if (!over) return;
 
     if (over.id === "trash") {
@@ -620,6 +627,7 @@ export default function Home() {
                 <DndContext
                   sensors={sensors}
                   onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
                   onDragEnd={handleDragEnd}
                 >
                   <SortableContext
@@ -661,17 +669,34 @@ export default function Home() {
                   <DragOverlay>
                     {activeNote && (
                       <div
-                        className={`rotate-2 rounded-xl border p-3.5 shadow-card-hover ${
-                          activeNote.poll_type ? "w-64" : "w-[210px]"
-                        }`}
+                        className={`rounded-xl border p-3.5 shadow-card-hover transition-all ${
+                          overTrash ? "scale-90 rotate-6" : "rotate-2"
+                        } ${activeNote.poll_type ? "w-64" : "w-[210px]"}`}
                         style={{
-                          borderColor: `${activeNote.color}55`,
-                          backgroundColor: `${activeNote.color}14`,
+                          borderColor: overTrash ? "#c85a4a" : `${activeNote.color}55`,
+                          backgroundColor: overTrash ? "#c85a4a1f" : `${activeNote.color}14`,
                         }}
                       >
-                        <p className="whitespace-pre-wrap text-sm text-ink-900">
+                        <p
+                          className="whitespace-pre-wrap text-sm"
+                          style={{ color: overTrash ? "#c85a4a" : "rgb(var(--ink-900))" }}
+                        >
                           {activeNote.text}
                         </p>
+                        {overTrash && (
+                          <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-[#c85a4a]">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                              <path
+                                d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                            Törlés
+                          </p>
+                        )}
                       </div>
                     )}
                   </DragOverlay>
