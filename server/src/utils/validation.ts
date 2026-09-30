@@ -85,6 +85,7 @@ export const createTaskSchema = z.object({
   stage: taskStageEnum.default("backlog"),
   assignee_id: z.number().int().nullable().optional(),
   tag_ids: tagIdsField,
+  parent_task_id: z.number().int().nullable().optional(),
 });
 
 export const updateTaskSchema = z.object({

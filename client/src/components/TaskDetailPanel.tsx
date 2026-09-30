@@ -6,7 +6,18 @@ import { TagChip } from "./TagChip";
 import { AssigneePicker } from "./AssigneePicker";
 import { Avatar } from "./Avatar";
 import { CommentList } from "./CommentList";
+import { NewTaskModal } from "./NewTaskModal";
 import { useEscapeToClose } from "../hooks/useEscapeToClose";
+
+const STAGE_ACCENT: Record<TaskStage, string> = {
+  backlog: "#9aa0aa",
+  todo: "#6b7cae",
+  in_progress: "#d99a3d",
+  blocked: "#c85a4a",
+  waiting_review: "#7c6bb0",
+  done: "#3a8a74",
+  closed: "#6b7280",
+};
 
 function formatDateTime(iso: string): string {
   return new Date(iso + "Z").toLocaleString("hu-HU", {
@@ -21,15 +32,21 @@ function formatDateTime(iso: string): string {
 export function TaskDetailPanel({
   task,
   members,
+  allTasks,
   onClose,
   onUpdated,
   onDeleted,
+  onTaskCreated,
+  onOpenTask,
 }: {
   task: Task;
   members: TeamMember[];
+  allTasks: Task[];
   onClose: () => void;
   onUpdated: (t: Task) => void;
   onDeleted: (id: number) => void;
+  onTaskCreated: (t: Task) => void;
+  onOpenTask: (t: Task) => void;
 }) {
   useEscapeToClose(onClose);
   const [form, setForm] = useState({
@@ -48,6 +65,7 @@ export function TaskDetailPanel({
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [postingComment, setPostingComment] = useState(false);
+  const [addingSubtask, setAddingSubtask] = useState(false);
   const titleRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -146,6 +164,8 @@ export function TaskDetailPanel({
       setPostingComment(false);
     }
   }
+
+  const children = allTasks.filter((t) => t.parent_task_id === task.id);
 
   return (
     <>
@@ -345,6 +365,52 @@ export function TaskDetailPanel({
             </div>
           </section>
 
+          <section className="mb-5">
+            <span className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-ink-500">
+              Alfeladatok
+              {children.length > 0 && (
+                <span className="normal-case tracking-normal text-ink-500">
+                  {children.filter((c) => c.stage === "done" || c.stage === "closed").length}/
+                  {children.length}
+                </span>
+              )}
+            </span>
+            <div className="space-y-1">
+              {children.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => onOpenTask(c)}
+                  className="flex w-full items-center gap-2 rounded-lg px-1 py-1.5 text-left transition hover:bg-ink-100/60"
+                >
+                  <span
+                    className="h-1.5 w-1.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: STAGE_ACCENT[c.stage] }}
+                  />
+                  <span
+                    className={`min-w-0 flex-1 truncate text-sm ${
+                      c.stage === "done" || c.stage === "closed"
+                        ? "text-ink-500 line-through"
+                        : "text-ink-900"
+                    }`}
+                  >
+                    {c.title}
+                  </span>
+                  {c.assignee_id && (
+                    <Avatar
+                      avatar={c.assignee_avatar}
+                      name={c.assignee_nickname || c.assignee_email}
+                      size={18}
+                    />
+                  )}
+                </button>
+              ))}
+              {children.length === 0 && (
+                <p className="text-sm text-ink-500">Még nincs egy alfeladat sem.</p>
+              )}
+            </div>
+          </section>
+
           <section>
             <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-500">
               Kommentek
@@ -390,15 +456,39 @@ export function TaskDetailPanel({
             ) : (
               <span />
             )}
-            <button
-              onClick={handleDelete}
-              className="shrink-0 text-xs font-medium text-ink-500 transition hover:text-scale-1"
-            >
-              Feladat törlése
-            </button>
+            <div className="flex shrink-0 items-center gap-3">
+              <button
+                onClick={() => setAddingSubtask(true)}
+                className="text-xs font-medium text-ink-500 transition hover:text-ink-900"
+              >
+                + Alfeladat
+              </button>
+              <button
+                onClick={handleDelete}
+                className="text-xs font-medium text-ink-500 transition hover:text-scale-1"
+              >
+                Feladat törlése
+              </button>
+            </div>
           </div>
         </div>
       </aside>
+
+      {addingSubtask && (
+        <NewTaskModal
+          members={members}
+          defaultStage="todo"
+          allowStagePicker
+          parentTaskId={task.id}
+          parentTaskTitle={task.title}
+          onClose={() => setAddingSubtask(false)}
+          onCreated={(created) => {
+            onTaskCreated(created);
+            onUpdated({ ...task, subtask_count: task.subtask_count + 1 });
+            setAddingSubtask(false);
+          }}
+        />
+      )}
     </>
   );
 }

@@ -102,6 +102,10 @@ export interface Task {
   created_at: string;
   updated_at: string;
   tags: Tag[];
+  parent_task_id: number | null;
+  parent_title: string | null;
+  subtask_count: number;
+  subtask_done_count: number;
   comment_count: number;
 }
 

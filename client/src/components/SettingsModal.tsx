@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
@@ -49,7 +49,7 @@ function SettingsCard({ title, children }: { title: string; children: React.Reac
   );
 }
 
-function ProfileTab() {
+function ProfileTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void }) {
   const { user, setUser } = useAuth();
   const { theme, setTheme } = useTheme();
   const version = useAppVersion();
@@ -58,6 +58,11 @@ function ProfileTab() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+
+  useEffect(() => {
+    onDirtyChange(nickname !== (user?.nickname || "") || avatar !== (user?.avatar || null));
+    return () => onDirtyChange(false);
+  }, [nickname, avatar, user?.nickname, user?.avatar, onDirtyChange]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -195,13 +200,18 @@ function ProfileTab() {
   );
 }
 
-function PasswordTab() {
+function PasswordTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    onDirtyChange(!!(currentPassword || newPassword || newPasswordConfirm));
+    return () => onDirtyChange(false);
+  }, [currentPassword, newPassword, newPasswordConfirm, onDirtyChange]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -294,7 +304,7 @@ function PasswordTab() {
   );
 }
 
-function TagsTab() {
+function TagsTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void }) {
   const [tags, setTags] = useState<Tag[]>([]);
   const [name, setName] = useState("");
   const [color, setColor] = useState<string>(TAG_COLORS[0]);
@@ -306,6 +316,11 @@ function TagsTab() {
   }
 
   useEffect(load, []);
+
+  useEffect(() => {
+    onDirtyChange(!!name.trim());
+    return () => onDirtyChange(false);
+  }, [name, onDirtyChange]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -392,7 +407,7 @@ function TagsTab() {
   );
 }
 
-function LinksTab() {
+function LinksTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void }) {
   const { showToast } = useToast();
   const [links, setLinks] = useState<Link[]>([]);
   const [settings, setSettings] = useState<AppSettings>({
@@ -417,6 +432,11 @@ function LinksTab() {
 
   const [pendingSave, setPendingSave] = useState<Link | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Link | null>(null);
+
+  useEffect(() => {
+    onDirtyChange(!!label.trim() || !!url.trim() || editingId !== null);
+    return () => onDirtyChange(false);
+  }, [label, url, editingId, onDirtyChange]);
 
   function load() {
     Promise.all([
@@ -742,18 +762,25 @@ function CustomersSettingsTab() {
   );
 }
 
-function TasksSettingsTab() {
+function TasksSettingsTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void }) {
   const { showToast } = useToast();
   const [autoCloseDays, setAutoCloseDays] = useState<string>("30");
+  const [savedDays, setSavedDays] = useState<string>("30");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     api<AppSettings>("/api/settings").then((d) => {
       setAutoCloseDays(String(d.autoCloseDays));
+      setSavedDays(String(d.autoCloseDays));
       setLoading(false);
     });
   }, []);
+
+  useEffect(() => {
+    onDirtyChange(!loading && autoCloseDays !== savedDays);
+    return () => onDirtyChange(false);
+  }, [autoCloseDays, savedDays, loading, onDirtyChange]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -769,6 +796,7 @@ function TasksSettingsTab() {
         body: { autoCloseDays: days },
       });
       setAutoCloseDays(String(next.autoCloseDays));
+      setSavedDays(String(next.autoCloseDays));
       showToast("Beállítás elmentve");
     } catch {
       showToast("Nem sikerült menteni a beállítást.", "error");
@@ -813,10 +841,26 @@ function TasksSettingsTab() {
 type Tab = "profil" | "jelszo" | "cimkek" | "linkek" | "ugyfelek" | "feladatok" | "felhasznalok";
 
 export function SettingsModal({ onClose }: { onClose: () => void }) {
-  useEscapeToClose(onClose);
   const { user } = useAuth();
   const [tab, setTab] = useState<Tab>("profil");
+  const [confirmClose, setConfirmClose] = useState(false);
+  const dirtyTabsRef = useRef<Set<Tab>>(new Set());
   const isSuperAdmin = user?.role === "superadmin";
+
+  const setTabDirty = useCallback((key: Tab, dirty: boolean) => {
+    if (dirty) dirtyTabsRef.current.add(key);
+    else dirtyTabsRef.current.delete(key);
+  }, []);
+
+  const requestClose = useCallback(() => {
+    if (dirtyTabsRef.current.size > 0) {
+      setConfirmClose(true);
+    } else {
+      onClose();
+    }
+  }, [onClose]);
+
+  useEscapeToClose(requestClose);
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "profil", label: "Profil" },
@@ -832,14 +876,14 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
     <>
       <div
         className="fixed inset-0 z-40 bg-night/25 animate-fade-in"
-        onClick={onClose}
+        onClick={requestClose}
       />
       <div className="fixed inset-0 z-50 flex items-center justify-center px-3 py-6 sm:px-6">
         <div className="flex h-full w-full max-w-2xl animate-rise-in flex-col overflow-hidden rounded-2xl border border-ink-100 bg-ink-50 shadow-panel">
           <div className="flex items-center justify-between border-b border-ink-100 bg-surface px-5 py-4">
             <h1 className="font-display text-xl font-medium text-ink-950">Beállítások</h1>
             <button
-              onClick={onClose}
+              onClick={requestClose}
               className="rounded-full p-1.5 text-ink-500 transition hover:bg-ink-100 hover:text-ink-900"
               aria-label="Bezárás"
             >
@@ -873,12 +917,18 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
           </div>
 
           <div className="flex-1 overflow-y-auto px-5 py-6">
-            {tab === "profil" && <ProfileTab />}
-            {tab === "jelszo" && <PasswordTab />}
-            {tab === "cimkek" && <TagsTab />}
-            {tab === "linkek" && <LinksTab />}
+            {tab === "profil" && (
+              <ProfileTab onDirtyChange={(d) => setTabDirty("profil", d)} />
+            )}
+            {tab === "jelszo" && (
+              <PasswordTab onDirtyChange={(d) => setTabDirty("jelszo", d)} />
+            )}
+            {tab === "cimkek" && <TagsTab onDirtyChange={(d) => setTabDirty("cimkek", d)} />}
+            {tab === "linkek" && <LinksTab onDirtyChange={(d) => setTabDirty("linkek", d)} />}
             {tab === "ugyfelek" && <CustomersSettingsTab />}
-            {tab === "feladatok" && <TasksSettingsTab />}
+            {tab === "feladatok" && (
+              <TasksSettingsTab onDirtyChange={(d) => setTabDirty("feladatok", d)} />
+            )}
             {tab === "felhasznalok" && isSuperAdmin && (
               <div>
                 <h2 className="mb-4 font-display text-lg font-medium text-ink-950">
@@ -890,6 +940,21 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
       </div>
+
+      {confirmClose && (
+        <ConfirmDialog
+          title="Bezárás mentés nélkül?"
+          message="Vannak el nem mentett módosításaid ebben az ablakban. Ha bezárod, ezek elvesznek."
+          confirmLabel="Bezárás mentés nélkül"
+          danger
+          onConfirm={() => {
+            setConfirmClose(false);
+            dirtyTabsRef.current.clear();
+            onClose();
+          }}
+          onCancel={() => setConfirmClose(false)}
+        />
+      )}
     </>
   );
 }

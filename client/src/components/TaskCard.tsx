@@ -33,6 +33,20 @@ export function TaskCard({
           : "border-ink-100 bg-surface"
       }`}
     >
+      {task.parent_task_id && task.parent_title && (
+        <p className="mb-1 flex items-center gap-1 truncate text-[11px] font-medium text-ink-500">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" className="shrink-0">
+            <path
+              d="M9 6l6 6-6 6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span className="truncate">{task.parent_title}</span>
+        </p>
+      )}
       <div className="mb-1.5 flex items-start justify-between gap-2">
         <h3 className="min-w-0 flex-1 truncate text-sm font-semibold leading-snug text-ink-950">
           {task.title}
@@ -58,18 +72,36 @@ export function TaskCard({
         </div>
       )}
 
-      {!!task.comment_count && (
-        <div className="mt-2 flex items-center gap-1 text-[11px] text-ink-500">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          {task.comment_count}
+      {(!!task.comment_count || task.subtask_count > 0) && (
+        <div className="mt-2 flex items-center gap-3 text-[11px] text-ink-500">
+          {task.subtask_count > 0 && (
+            <div className="flex items-center gap-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M9 11l3 3L22 4M11 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              {task.subtask_done_count}/{task.subtask_count}
+            </div>
+          )}
+          {!!task.comment_count && (
+            <div className="flex items-center gap-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              {task.comment_count}
+            </div>
+          )}
         </div>
       )}
     </div>

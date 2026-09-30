@@ -227,3 +227,15 @@ if (!taskColumns.some((c) => c.name === "done_at")) {
   db.exec("ALTER TABLE tasks ADD COLUMN done_at TEXT");
   db.exec("UPDATE tasks SET done_at = updated_at WHERE stage = 'done'");
 }
+
+// Migration: `parent_task_id` lets a task be a subtask of another task -
+// subtasks are full tasks (their own stage, draggable across columns like
+// any other card), just carrying a link back to their parent, shown as a
+// label on the card. No REFERENCES clause here (kept consistent with the
+// other ALTER TABLE migrations above) - cascading delete of subtasks when
+// the parent is removed is handled in tasksRepo.remove() instead.
+taskColumns = db.prepare("PRAGMA table_info(tasks)").all() as ColumnInfo[];
+if (!taskColumns.some((c) => c.name === "parent_task_id")) {
+  db.exec("ALTER TABLE tasks ADD COLUMN parent_task_id INTEGER");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_parent ON tasks(parent_task_id)");
+}
