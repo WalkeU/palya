@@ -173,8 +173,16 @@ export function TaskDetailPanel({
         className="fixed inset-0 z-30 bg-night/20 animate-fade-in"
         onClick={onClose}
       />
-      <aside className="fixed right-0 top-0 z-40 flex h-full w-full max-w-md animate-panel-in flex-col border-l border-ink-100 bg-ink-50 shadow-panel">
-        <div className="flex items-center justify-between border-b border-ink-100 bg-surface px-5 py-4">
+      <aside
+        className={`fixed right-0 top-0 z-40 flex h-full w-full max-w-md animate-panel-in flex-col border-l bg-ink-50 shadow-panel ${
+          task.parent_task_id ? "border-brand-300" : "border-ink-100"
+        }`}
+      >
+        <div
+          className={`flex items-center justify-between border-b border-ink-100 px-5 py-4 ${
+            task.parent_task_id ? "bg-brand-100/25" : "bg-surface"
+          }`}
+        >
           <div className="min-w-0 flex-1">
             <textarea
               ref={titleRef}
