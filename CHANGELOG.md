@@ -1,6 +1,7 @@
 # Changelog
 
 [Unreleased]
+- 2026-10-02 - Fixed subtask position (now inserts under its parent), stale progress badge counts, and the badge icon
 - 2026-10-02 - Added a "Kész" close reason for customers and a reason filter on the Lezárva list; closed cards no longer show the priority/motivation badge
 - 2026-09-30 - Added a changelog viewer in Settings and a clearer red drag-over-trash warning when deleting a note
 - 2026-09-30 - Added subtasks: create sub-tasks under a task, draggable on the board like any other task and labeled with their parent
