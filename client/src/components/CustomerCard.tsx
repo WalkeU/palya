@@ -6,10 +6,12 @@ import { ScaleBadge } from "./ScaleBadge";
 export function CustomerCard({
   customer,
   primaryField,
+  hideScale,
   onOpen,
 }: {
   customer: Customer;
   primaryField: AppSettings["customerPrimaryField"];
+  hideScale?: boolean;
   onOpen: () => void;
 }) {
   const primary =
@@ -45,10 +47,10 @@ export function CustomerCard({
             <p className="truncate text-xs text-ink-500">{secondary}</p>
           )}
         </div>
-        {customer.stage === "potential" && (
+        {!hideScale && customer.stage === "potential" && (
           <ScaleBadge value={customer.priority} label="Prioritás" />
         )}
-        {customer.stage === "discussion" && (
+        {!hideScale && customer.stage === "discussion" && (
           <ScaleBadge value={customer.motivation} label="Motiváció" />
         )}
       </div>
