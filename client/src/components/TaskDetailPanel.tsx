@@ -258,14 +258,6 @@ export function TaskDetailPanel({
               Visszaállítás (Done)
             </button>
           )}
-          {stage !== "backlog" && stage !== "closed" && (
-            <button
-              onClick={() => handleStageChange("backlog")}
-              className="mb-5 w-full rounded-lg border border-ink-100 py-2 text-sm font-medium text-ink-500 transition hover:border-ink-300 hover:text-ink-900"
-            >
-              Backlogba
-            </button>
-          )}
 
           <section className="mb-5">
             <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
@@ -446,16 +438,24 @@ export function TaskDetailPanel({
 
         <div className="border-t border-ink-100 bg-surface px-5 py-3">
           <div className="flex items-center justify-between gap-2">
-            {stage === "done" ? (
-              <button
-                onClick={() => handleStageChange("closed")}
-                className="rounded-md border border-ink-100 px-2.5 py-1 text-xs font-medium text-ink-700 transition hover:border-ink-300 hover:text-ink-900"
-              >
-                Lezárás
-              </button>
-            ) : (
-              <span />
-            )}
+            <div className="flex items-center gap-2">
+              {stage !== "backlog" && stage !== "closed" && (
+                <button
+                  onClick={() => handleStageChange("backlog")}
+                  className="rounded-md border border-ink-100 px-2.5 py-1 text-xs font-medium text-ink-500 transition hover:border-ink-300 hover:text-ink-900"
+                >
+                  Backlogba
+                </button>
+              )}
+              {stage === "done" && (
+                <button
+                  onClick={() => handleStageChange("closed")}
+                  className="rounded-md border border-ink-100 px-2.5 py-1 text-xs font-medium text-ink-700 transition hover:border-ink-300 hover:text-ink-900"
+                >
+                  Lezárás
+                </button>
+              )}
+            </div>
             <div className="flex shrink-0 items-center gap-3">
               <button
                 onClick={() => setAddingSubtask(true)}
