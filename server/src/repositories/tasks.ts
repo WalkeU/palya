@@ -102,7 +102,18 @@ export const tasksRepo = {
   },
 
   create(input: TaskInput, createdBy: number | null): Task {
-    const position = this.nextPosition(input.stage);
+    let position: number;
+    const parent = input.parent_task_id ? this.findById(input.parent_task_id) : undefined;
+    if (parent && parent.stage === input.stage) {
+      // Drop a new subtask right after its parent in the same column,
+      // instead of at the bottom of the whole stage.
+      position = parent.position + 1;
+      db.prepare(
+        "UPDATE tasks SET position = position + 1 WHERE stage = ? AND position > ?"
+      ).run(input.stage, parent.position);
+    } else {
+      position = this.nextPosition(input.stage);
+    }
     const info = db
       .prepare(
         `INSERT INTO tasks (title, description, stage, assignee_id, position, created_by, parent_task_id)

@@ -77,10 +77,11 @@ export function TaskCard({
           {task.subtask_count > 0 && (
             <div className="flex items-center gap-1">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="1.8" />
                 <path
-                  d="M9 11l3 3L22 4M11 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6"
+                  d="M7 12l3 3 7-7"
                   stroke="currentColor"
-                  strokeWidth="1.6"
+                  strokeWidth="1.8"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />

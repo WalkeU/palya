@@ -140,9 +140,32 @@ export default function Tasks() {
     });
   }, [user?.id, user?.nickname, user?.avatar]);
 
+  // Subtask counts come from the server on fetch, but go stale the moment a
+  // child task's stage changes locally (create, drag, or edit from its own
+  // panel never touches the parent's row) - recompute them client-side off
+  // the live `tasks` array instead of trusting the fetched count fields.
+  const tasksWithLiveCounts = useMemo(() => {
+    const counts = new Map<number, { count: number; done: number }>();
+    for (const t of tasks) {
+      if (t.parent_task_id === null) continue;
+      const entry = counts.get(t.parent_task_id) ?? { count: 0, done: 0 };
+      entry.count += 1;
+      if (t.stage === "done" || t.stage === "closed") entry.done += 1;
+      counts.set(t.parent_task_id, entry);
+    }
+    return tasks.map((t) => {
+      const entry = counts.get(t.id);
+      return {
+        ...t,
+        subtask_count: entry?.count ?? 0,
+        subtask_done_count: entry?.done ?? 0,
+      };
+    });
+  }, [tasks]);
+
   const visibleTasks = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return tasks
+    return tasksWithLiveCounts
       .filter((t) =>
         selectedPersonId === null
           ? true
@@ -156,7 +179,7 @@ export default function Tasks() {
           t.tags.some((tag) => selectedTagIds.has(tag.id))
       )
       .filter((t) => !q || t.title.toLowerCase().includes(q));
-  }, [tasks, selectedPersonId, selectedTagIds, search]);
+  }, [tasksWithLiveCounts, selectedPersonId, selectedTagIds, search]);
 
   function toggleTagFilter(id: number) {
     setSelectedTagIds((prev) => {
@@ -189,7 +212,7 @@ export default function Tasks() {
     [visibleTasks]
   );
 
-  const activeTask = tasks.find((t) => t.id === activeId) || null;
+  const activeTask = tasksWithLiveCounts.find((t) => t.id === activeId) || null;
 
   function findContainer(id: number | string): TaskStage | undefined {
     if (typeof id === "string" && BOARD_STAGE_KEYS.has(id as TaskStage)) {
@@ -396,7 +419,7 @@ export default function Tasks() {
         <TaskDetailPanel
           task={selected}
           members={members}
-          allTasks={tasks}
+          allTasks={tasksWithLiveCounts}
           onClose={() => setSelected(null)}
           onUpdated={handleUpdated}
           onDeleted={handleDeleted}

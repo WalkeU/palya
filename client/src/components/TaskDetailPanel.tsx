@@ -477,14 +477,17 @@ export function TaskDetailPanel({
       {addingSubtask && (
         <NewTaskModal
           members={members}
-          defaultStage="todo"
+          defaultStage={
+            TASK_STAGES.some((s) => s.key === task.stage)
+              ? (task.stage as (typeof TASK_STAGES)[number]["key"])
+              : "todo"
+          }
           allowStagePicker
           parentTaskId={task.id}
           parentTaskTitle={task.title}
           onClose={() => setAddingSubtask(false)}
           onCreated={(created) => {
             onTaskCreated(created);
-            onUpdated({ ...task, subtask_count: task.subtask_count + 1 });
             setAddingSubtask(false);
           }}
         />
