@@ -192,6 +192,45 @@ if (!customerColumns.some((c) => c.name === "closed_reason")) {
   );
 }
 
+// Migration: `closed_reason` gains a third value, 'completed' ("Kész"), for
+// customers closed out as successfully won rather than lost - the CHECK
+// constraint added above can't be altered in place, so rebuild the table
+// (same dance as the `customers.name` NOT NULL migration further up).
+{
+  const customersTableSql = (
+    db
+      .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'customers'")
+      .get() as { sql: string } | undefined
+  )?.sql;
+  if (customersTableSql && !customersTableSql.includes("'completed'")) {
+    db.exec(`
+      CREATE TABLE customers_new2 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        business TEXT,
+        phone TEXT,
+        email TEXT,
+        note TEXT,
+        stage TEXT NOT NULL CHECK (stage IN ('potential', 'discussion', 'building', 'done')) DEFAULT 'potential',
+        priority INTEGER CHECK (priority BETWEEN 1 AND 5),
+        motivation INTEGER CHECK (motivation BETWEEN 1 AND 5),
+        position INTEGER NOT NULL DEFAULT 0,
+        closed_reason TEXT CHECK (closed_reason IN ('not_interested', 'failed', 'completed')),
+        created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      INSERT INTO customers_new2
+        SELECT id, name, business, phone, email, note, stage, priority, motivation,
+               position, closed_reason, created_by, created_at, updated_at
+        FROM customers;
+      DROP TABLE customers;
+      ALTER TABLE customers_new2 RENAME TO customers;
+      CREATE INDEX IF NOT EXISTS idx_customers_stage ON customers(stage);
+    `);
+  }
+}
+
 // Migration: `poll_type` lets a note double as a single/multiple-choice poll.
 let noteColumns = db.prepare("PRAGMA table_info(notes)").all() as ColumnInfo[];
 if (!noteColumns.some((c) => c.name === "poll_type")) {

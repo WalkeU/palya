@@ -22,7 +22,10 @@ export const createUserSchema = z.object({
 
 const stageEnum = z.enum(["potential", "discussion", "building", "done"]);
 const scaleValue = z.number().int().min(1).max(5).nullable().optional();
-const closedReasonEnum = z.enum(["not_interested", "failed"]).nullable().optional();
+const closedReasonEnum = z
+  .enum(["not_interested", "failed", "completed"])
+  .nullable()
+  .optional();
 
 const nameOrBusinessRefine = (data: { name?: string | null; business?: string | null }) =>
   !!(data.name && data.name.trim()) || !!(data.business && data.business.trim());

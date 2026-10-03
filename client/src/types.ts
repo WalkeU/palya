@@ -1,5 +1,5 @@
 export type Stage = "potential" | "discussion" | "building" | "done";
-export type ClosedReason = "not_interested" | "failed";
+export type ClosedReason = "not_interested" | "failed" | "completed";
 
 export interface User {
   id: number;
@@ -56,6 +56,7 @@ export const STAGES: { key: Stage; label: string; accent: string }[] = [
 ];
 
 export const CLOSED_REASONS: { key: ClosedReason; label: string; accent: string }[] = [
+  { key: "completed", label: "Kész", accent: "#3a8a74" },
   { key: "not_interested", label: "Nem érdekli", accent: "#9a8a4a" },
   { key: "failed", label: "Meghiúsult", accent: "#c85a4a" },
 ];
@@ -167,3 +168,14 @@ export const TASK_STAGES: { key: TaskStage; label: string; accent: string }[] = 
   { key: "waiting_review", label: "Waiting for review", accent: "#7c6bb0" },
   { key: "done", label: "Done", accent: "#3a8a74" },
 ];
+
+// TASK_STAGES only covers the board's own columns; backlog and closed live in
+// separate tabs but still need a dot color wherever a task's stage is shown.
+export const TASK_STAGE_ACCENT: Record<TaskStage, string> = {
+  backlog: "#9aa0aa",
+  closed: "#6b7280",
+  ...(Object.fromEntries(TASK_STAGES.map((s) => [s.key, s.accent])) as Record<
+    Exclude<TaskStage, "backlog" | "closed">,
+    string
+  >),
+};

@@ -4,10 +4,10 @@
 
 ## Funkciók
 
-- **Ügyfelek** (`/ugyfelek`): Kanban tábla a **Potenciál → Egyeztetés → Kiépítés alatt → Kész** fázisokon át, priorizálás/motiváció skálával, kommentekkel. Egy ügyfél "Nem érdekli" / "Meghiúsult" jelöléssel archiválható (nem törlődik, bármikor visszaállítható a Lezárva listáról). Beállításban választható, hogy a név vagy az üzlet neve jelenjen meg elöl.
-- **Feladatok** (`/feladatok`): csapat Kanban tábla (Todo → Work in Progress → Blocked → Waiting for review → Done), külön Backlog és Lezárva nézettel. Címkék, felelős-hozzárendelés, kiemelés (piros háttér), kommentek, keresés cím alapján, szűrés felelős vagy "nincs hozzárendelve" szerint. A Done fázisban egy beállítható ideig (alapból 30 nap) veszteglő feladat automatikusan átkerül a Lezárva közé, onnan visszahozható.
-- **Kezdőlap** (`/`): csapat közös jegyzetei (szabadon húzhatók/átrendezhetők, szavazásként is használhatók - egyszeres vagy többszörös választással, opciók utólag is szerkeszthetők), és testreszabható linkek listája.
-- **Beállítások**: profil (avatar, becenév, sötét/világos mód), jelszóváltás, címkék kezelése, linkek szerkesztése, ügyfél-mező sorrend, feladatok automatikus lezárásának időtartama, felhasználókezelés (superadmin).
+- **Ügyfelek** (`/ugyfelek`): Kanban tábla a **Potenciál → Egyeztetés → Kiépítés alatt → Kész** fázisokon át, priorizálás/motiváció skálával, kommentekkel. Egy ügyfél "Kész" / "Nem érdekli" / "Meghiúsult" jelöléssel zárható le (nem törlődik, bármikor visszaállítható a Lezárva listáról, ami ok szerint is szűrhető). Beállításban választható, hogy a név vagy az üzlet neve jelenjen meg elöl.
+- **Feladatok** (`/feladatok`): csapat Kanban tábla (Todo → Work in Progress → Blocked → Waiting for review → Done), külön Backlog és Lezárva nézettel. Címkék, felelős-hozzárendelés, kiemelés (piros háttér), kommentek, keresés cím alapján, szűrés felelős vagy "nincs hozzárendelve" szerint. Egy feladathoz alfeladatok adhatók ("+ Alfeladat") - ezek maguk is teljes, húzható task-kártyák a táblán, a szülőjük címkéjével jelölve és egy kicsit eltérő panel-stílussal, de nem lehet beléjük újabb alfeladatot rakni. A Done fázisban egy beállítható ideig (alapból 30 nap) veszteglő feladat automatikusan átkerül a Lezárva közé, onnan visszahozható.
+- **Kezdőlap** (`/`): csapat közös jegyzetei (szabadon húzhatók/átrendezhetők, a kukára húzva törölhetők - húzás közben pirosra vált a jegyzet jelezve a törlést -, szavazásként is használhatók - egyszeres vagy többszörös választással, opciók utólag is szerkeszthetők), és testreszabható linkek listája.
+- **Beállítások**: profil (avatar, becenév, sötét/világos mód, verziószám + changelog megtekintő), jelszóváltás, címkék kezelése, linkek szerkesztése, ügyfél-mező sorrend, feladatok automatikus lezárásának időtartama, felhasználókezelés (superadmin). Mentetlen módosítással próbált bezárásnál figyelmeztet.
 
 ## Indítás
 

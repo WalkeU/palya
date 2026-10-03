@@ -58,6 +58,27 @@ function ProfileTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [changelogOpen, setChangelogOpen] = useState(false);
+  const [changelogLoading, setChangelogLoading] = useState(false);
+  const [changelogLines, setChangelogLines] = useState<string[]>([]);
+
+  async function toggleChangelog() {
+    if (!changelogOpen && changelogLines.length === 0) {
+      setChangelogLoading(true);
+      try {
+        const data = await api<{ content: string }>("/api/changelog");
+        const lines = data.content
+          .split("\n")
+          .map((l) => l.trim())
+          .filter((l) => l.startsWith("- "))
+          .map((l) => l.slice(2));
+        setChangelogLines(lines);
+      } finally {
+        setChangelogLoading(false);
+      }
+    }
+    setChangelogOpen((v) => !v);
+  }
 
   useEffect(() => {
     onDirtyChange(nickname !== (user?.nickname || "") || avatar !== (user?.avatar || null));
@@ -194,7 +215,43 @@ function ProfileTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void
       </SettingsCard>
 
       {version && (
-        <p className="text-center text-[11px] text-ink-300">Pálya v{version}</p>
+        <div className="text-center">
+          <p className="text-[11px] text-ink-300">Pálya v{version}</p>
+          <button
+            type="button"
+            onClick={toggleChangelog}
+            className="mt-1 text-[11px] text-ink-300 underline-offset-2 transition hover:text-ink-500 hover:underline"
+          >
+            {changelogOpen ? "Változásnapló elrejtése" : "Változásnapló"}
+          </button>
+          {changelogOpen && (
+            <div className="mx-auto mt-3 max-h-48 max-w-sm overflow-y-auto rounded-lg border border-ink-100 bg-ink-50/60 p-3 text-left">
+              {changelogLoading ? (
+                <p className="text-xs text-ink-500">Betöltés…</p>
+              ) : changelogLines.length === 0 ? (
+                <p className="text-xs text-ink-500">Nincs elérhető változásnapló.</p>
+              ) : (
+                <ul className="space-y-1">
+                  {changelogLines.map((line, i) => {
+                    const isRelease = /^\d{4}-\d{2}-\d{2} release v/.test(line);
+                    return (
+                      <li
+                        key={i}
+                        className={
+                          isRelease
+                            ? "mt-2 text-[11px] font-semibold text-ink-700 first:mt-0"
+                            : "text-xs text-ink-500"
+                        }
+                      >
+                        {line}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

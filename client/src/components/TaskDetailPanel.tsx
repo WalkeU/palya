@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import type { Tag, Task, TaskComment, TaskStage, TeamMember } from "../types";
-import { TASK_STAGES } from "../types";
+import { TASK_STAGE_ACCENT, TASK_STAGES } from "../types";
 import { api } from "../api/client";
 import { TagChip } from "./TagChip";
 import { AssigneePicker } from "./AssigneePicker";
@@ -8,16 +8,6 @@ import { Avatar } from "./Avatar";
 import { CommentList } from "./CommentList";
 import { NewTaskModal } from "./NewTaskModal";
 import { useEscapeToClose } from "../hooks/useEscapeToClose";
-
-const STAGE_ACCENT: Record<TaskStage, string> = {
-  backlog: "#9aa0aa",
-  todo: "#6b7cae",
-  in_progress: "#d99a3d",
-  blocked: "#c85a4a",
-  waiting_review: "#7c6bb0",
-  done: "#3a8a74",
-  closed: "#6b7280",
-};
 
 function formatDateTime(iso: string): string {
   return new Date(iso + "Z").toLocaleString("hu-HU", {
@@ -173,9 +163,36 @@ export function TaskDetailPanel({
         className="fixed inset-0 z-30 bg-night/20 animate-fade-in"
         onClick={onClose}
       />
-      <aside className="fixed right-0 top-0 z-40 flex h-full w-full max-w-md animate-panel-in flex-col border-l border-ink-100 bg-ink-50 shadow-panel">
-        <div className="flex items-center justify-between border-b border-ink-100 bg-surface px-5 py-4">
+      <aside
+        className={`fixed right-0 top-0 z-40 flex h-full w-full max-w-md animate-panel-in flex-col border-l bg-ink-50 shadow-panel ${
+          task.parent_task_id ? "border-subtask-500" : "border-ink-100"
+        }`}
+      >
+        <div
+          className={`flex items-center justify-between border-b border-ink-100 px-5 py-4 ${
+            task.parent_task_id ? "bg-subtask-100/70" : "bg-surface"
+          }`}
+        >
           <div className="min-w-0 flex-1">
+            {task.parent_task_id && task.parent_title && (
+              <p className="mb-0.5 flex items-center gap-1 truncate text-[11px] font-semibold text-subtask-600">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="shrink-0"
+                >
+                  <polyline points="9 10 4 15 9 20" />
+                  <path d="M20 4v7a4 4 0 0 1-4 4H4" />
+                </svg>
+                <span className="truncate">{task.parent_title}</span>
+              </p>
+            )}
             <textarea
               ref={titleRef}
               value={form.title}
@@ -256,14 +273,6 @@ export function TaskDetailPanel({
               className="mb-5 w-full rounded-lg border border-ink-100 py-2 text-sm font-medium text-ink-700 transition hover:border-ink-300"
             >
               Visszaállítás (Done)
-            </button>
-          )}
-          {stage !== "backlog" && stage !== "closed" && (
-            <button
-              onClick={() => handleStageChange("backlog")}
-              className="mb-5 w-full rounded-lg border border-ink-100 py-2 text-sm font-medium text-ink-500 transition hover:border-ink-300 hover:text-ink-900"
-            >
-              Backlogba
             </button>
           )}
 
@@ -365,51 +374,53 @@ export function TaskDetailPanel({
             </div>
           </section>
 
-          <section className="mb-5">
-            <span className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-ink-500">
-              Alfeladatok
-              {children.length > 0 && (
-                <span className="normal-case tracking-normal text-ink-500">
-                  {children.filter((c) => c.stage === "done" || c.stage === "closed").length}/
-                  {children.length}
-                </span>
-              )}
-            </span>
-            <div className="space-y-1">
-              {children.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => onOpenTask(c)}
-                  className="flex w-full items-center gap-2 rounded-lg px-1 py-1.5 text-left transition hover:bg-ink-100/60"
-                >
-                  <span
-                    className="h-1.5 w-1.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: STAGE_ACCENT[c.stage] }}
-                  />
-                  <span
-                    className={`min-w-0 flex-1 truncate text-sm ${
-                      c.stage === "done" || c.stage === "closed"
-                        ? "text-ink-500 line-through"
-                        : "text-ink-900"
-                    }`}
-                  >
-                    {c.title}
+          {!task.parent_task_id && (
+            <section className="mb-5">
+              <span className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-ink-500">
+                Alfeladatok
+                {children.length > 0 && (
+                  <span className="normal-case tracking-normal text-ink-500">
+                    {children.filter((c) => c.stage === "done" || c.stage === "closed").length}/
+                    {children.length}
                   </span>
-                  {c.assignee_id && (
-                    <Avatar
-                      avatar={c.assignee_avatar}
-                      name={c.assignee_nickname || c.assignee_email}
-                      size={18}
+                )}
+              </span>
+              <div className="space-y-1">
+                {children.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => onOpenTask(c)}
+                    className="flex w-full items-center gap-2 rounded-lg px-1 py-1.5 text-left transition hover:bg-ink-100/60"
+                  >
+                    <span
+                      className="h-1.5 w-1.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: TASK_STAGE_ACCENT[c.stage] }}
                     />
-                  )}
-                </button>
-              ))}
-              {children.length === 0 && (
-                <p className="text-sm text-ink-500">Még nincs egy alfeladat sem.</p>
-              )}
-            </div>
-          </section>
+                    <span
+                      className={`min-w-0 flex-1 truncate text-sm ${
+                        c.stage === "done" || c.stage === "closed"
+                          ? "text-ink-500 line-through"
+                          : "text-ink-900"
+                      }`}
+                    >
+                      {c.title}
+                    </span>
+                    {c.assignee_id && (
+                      <Avatar
+                        avatar={c.assignee_avatar}
+                        name={c.assignee_nickname || c.assignee_email}
+                        size={18}
+                      />
+                    )}
+                  </button>
+                ))}
+                {children.length === 0 && (
+                  <p className="text-sm text-ink-500">Még nincs egy alfeladat sem.</p>
+                )}
+              </div>
+            </section>
+          )}
 
           <section>
             <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-500">
@@ -446,23 +457,33 @@ export function TaskDetailPanel({
 
         <div className="border-t border-ink-100 bg-surface px-5 py-3">
           <div className="flex items-center justify-between gap-2">
-            {stage === "done" ? (
-              <button
-                onClick={() => handleStageChange("closed")}
-                className="rounded-md border border-ink-100 px-2.5 py-1 text-xs font-medium text-ink-700 transition hover:border-ink-300 hover:text-ink-900"
-              >
-                Lezárás
-              </button>
-            ) : (
-              <span />
-            )}
+            <div className="flex items-center gap-2">
+              {stage !== "backlog" && stage !== "closed" && (
+                <button
+                  onClick={() => handleStageChange("backlog")}
+                  className="rounded-md border border-ink-100 px-2.5 py-1 text-xs font-medium text-ink-500 transition hover:border-ink-300 hover:text-ink-900"
+                >
+                  Backlogba
+                </button>
+              )}
+              {stage === "done" && (
+                <button
+                  onClick={() => handleStageChange("closed")}
+                  className="rounded-md border border-ink-100 px-2.5 py-1 text-xs font-medium text-ink-700 transition hover:border-ink-300 hover:text-ink-900"
+                >
+                  Lezárás
+                </button>
+              )}
+            </div>
             <div className="flex shrink-0 items-center gap-3">
-              <button
-                onClick={() => setAddingSubtask(true)}
-                className="text-xs font-medium text-ink-500 transition hover:text-ink-900"
-              >
-                + Alfeladat
-              </button>
+              {!task.parent_task_id && (
+                <button
+                  onClick={() => setAddingSubtask(true)}
+                  className="text-xs font-medium text-ink-500 transition hover:text-ink-900"
+                >
+                  + Alfeladat
+                </button>
+              )}
               <button
                 onClick={handleDelete}
                 className="text-xs font-medium text-ink-500 transition hover:text-scale-1"
@@ -477,14 +498,17 @@ export function TaskDetailPanel({
       {addingSubtask && (
         <NewTaskModal
           members={members}
-          defaultStage="todo"
+          defaultStage={
+            TASK_STAGES.some((s) => s.key === task.stage)
+              ? (task.stage as (typeof TASK_STAGES)[number]["key"])
+              : "todo"
+          }
           allowStagePicker
           parentTaskId={task.id}
           parentTaskTitle={task.title}
           onClose={() => setAddingSubtask(false)}
           onCreated={(created) => {
             onTaskCreated(created);
-            onUpdated({ ...task, subtask_count: task.subtask_count + 1 });
             setAddingSubtask(false);
           }}
         />

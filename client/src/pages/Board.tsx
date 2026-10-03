@@ -14,7 +14,7 @@ import {
   arrayMove,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import type { AppSettings, Customer, Stage } from "../types";
+import type { AppSettings, ClosedReason, Customer, Stage } from "../types";
 import { CLOSED_REASONS, STAGES } from "../types";
 import { api } from "../api/client";
 import { TopBar } from "../components/TopBar";
@@ -35,6 +35,7 @@ export default function Board() {
   const [selected, setSelected] = useState<Customer | null>(null);
   const [creating, setCreating] = useState(false);
   const [primaryField, setPrimaryField] = useState<AppSettings["customerPrimaryField"]>("name");
+  const [closedReasonFilter, setClosedReasonFilter] = useState<ClosedReason | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -58,6 +59,13 @@ export default function Board() {
   const closedCustomers = useMemo(
     () => customers.filter((c) => c.closed_reason).sort((a, b) => b.id - a.id),
     [customers]
+  );
+  const visibleClosedCustomers = useMemo(
+    () =>
+      closedReasonFilter
+        ? closedCustomers.filter((c) => c.closed_reason === closedReasonFilter)
+        : closedCustomers,
+    [closedCustomers, closedReasonFilter]
   );
 
   const columns = useMemo(
@@ -170,42 +178,75 @@ export default function Board() {
             Betöltés…
           </div>
         ) : tab === "closed" ? (
-          closedCustomers.length === 0 ? (
-            <div className="flex items-center justify-center rounded-2xl border border-dashed border-ink-100 py-12 text-center text-xs text-ink-300">
-              Nincs lezárt ügyfél
-            </div>
-          ) : (
-            <DndContext sensors={sensors}>
-              <SortableContext
-                items={closedCustomers.map((c) => c.id)}
-                strategy={verticalListSortingStrategy}
+          <div className="mx-auto max-w-xl">
+            <div className="mb-3.5 flex flex-wrap items-center gap-1.5">
+              <button
+                onClick={() => setClosedReasonFilter(null)}
+                className="rounded-full px-3 py-1 text-xs font-medium transition"
+                style={{
+                  backgroundColor:
+                    closedReasonFilter === null ? "rgb(var(--night))" : "rgb(var(--ink-100))",
+                  color: closedReasonFilter === null ? "white" : "rgb(var(--ink-700))",
+                }}
               >
-                <div className="mx-auto flex max-w-xl flex-col gap-2.5">
-                  {closedCustomers.map((c) => (
-                    <div key={c.id} className="relative">
-                      <span
-                        className="absolute right-3.5 top-3.5 z-10 rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                        style={{
-                          color: CLOSED_REASONS.find((r) => r.key === c.closed_reason)
-                            ?.accent,
-                          backgroundColor: `${
-                            CLOSED_REASONS.find((r) => r.key === c.closed_reason)?.accent
-                          }1a`,
-                        }}
-                      >
-                        {CLOSED_REASONS.find((r) => r.key === c.closed_reason)?.label}
-                      </span>
-                      <CustomerCard
-                        customer={c}
-                        primaryField={primaryField}
-                        onOpen={() => setSelected(c)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-          )
+                Mind
+              </button>
+              {CLOSED_REASONS.map((r) => {
+                const active = closedReasonFilter === r.key;
+                return (
+                  <button
+                    key={r.key}
+                    onClick={() => setClosedReasonFilter(active ? null : r.key)}
+                    className="rounded-full px-3 py-1 text-xs font-medium transition"
+                    style={{
+                      backgroundColor: active ? `${r.accent}1a` : "rgb(var(--ink-100))",
+                      color: active ? r.accent : "rgb(var(--ink-700))",
+                    }}
+                  >
+                    {r.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {visibleClosedCustomers.length === 0 ? (
+              <div className="flex items-center justify-center rounded-2xl border border-dashed border-ink-100 py-12 text-center text-xs text-ink-300">
+                Nincs lezárt ügyfél
+              </div>
+            ) : (
+              <DndContext sensors={sensors}>
+                <SortableContext
+                  items={visibleClosedCustomers.map((c) => c.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="flex flex-col gap-2.5">
+                    {visibleClosedCustomers.map((c) => (
+                      <div key={c.id} className="relative">
+                        <span
+                          className="absolute right-3.5 top-3.5 z-10 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                          style={{
+                            color: CLOSED_REASONS.find((r) => r.key === c.closed_reason)
+                              ?.accent,
+                            backgroundColor: `${
+                              CLOSED_REASONS.find((r) => r.key === c.closed_reason)?.accent
+                            }1a`,
+                          }}
+                        >
+                          {CLOSED_REASONS.find((r) => r.key === c.closed_reason)?.label}
+                        </span>
+                        <CustomerCard
+                          customer={c}
+                          primaryField={primaryField}
+                          hideScale
+                          onOpen={() => setSelected(c)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            )}
+          </div>
         ) : (
           <DndContext
             sensors={sensors}
