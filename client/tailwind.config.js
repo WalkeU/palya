@@ -29,6 +29,11 @@ export default {
           400: "rgb(var(--brand-400) / <alpha-value>)",
           100: "rgb(var(--brand-100) / <alpha-value>)",
         },
+        subtask: {
+          600: "rgb(var(--subtask-600) / <alpha-value>)",
+          500: "rgb(var(--subtask-500) / <alpha-value>)",
+          100: "rgb(var(--subtask-100) / <alpha-value>)",
+        },
         scale: {
           1: "#e0564b",
           2: "#e8935a",

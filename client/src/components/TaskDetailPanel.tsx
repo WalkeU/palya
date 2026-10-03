@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import type { Tag, Task, TaskComment, TaskStage, TeamMember } from "../types";
-import { TASK_STAGES } from "../types";
+import { TASK_STAGE_ACCENT, TASK_STAGES } from "../types";
 import { api } from "../api/client";
 import { TagChip } from "./TagChip";
 import { AssigneePicker } from "./AssigneePicker";
@@ -8,16 +8,6 @@ import { Avatar } from "./Avatar";
 import { CommentList } from "./CommentList";
 import { NewTaskModal } from "./NewTaskModal";
 import { useEscapeToClose } from "../hooks/useEscapeToClose";
-
-const STAGE_ACCENT: Record<TaskStage, string> = {
-  backlog: "#9aa0aa",
-  todo: "#6b7cae",
-  in_progress: "#d99a3d",
-  blocked: "#c85a4a",
-  waiting_review: "#7c6bb0",
-  done: "#3a8a74",
-  closed: "#6b7280",
-};
 
 function formatDateTime(iso: string): string {
   return new Date(iso + "Z").toLocaleString("hu-HU", {
@@ -175,15 +165,34 @@ export function TaskDetailPanel({
       />
       <aside
         className={`fixed right-0 top-0 z-40 flex h-full w-full max-w-md animate-panel-in flex-col border-l bg-ink-50 shadow-panel ${
-          task.parent_task_id ? "border-brand-400" : "border-ink-100"
+          task.parent_task_id ? "border-subtask-500" : "border-ink-100"
         }`}
       >
         <div
           className={`flex items-center justify-between border-b border-ink-100 px-5 py-4 ${
-            task.parent_task_id ? "bg-brand-100/25" : "bg-surface"
+            task.parent_task_id ? "bg-subtask-100/70" : "bg-surface"
           }`}
         >
           <div className="min-w-0 flex-1">
+            {task.parent_task_id && task.parent_title && (
+              <p className="mb-0.5 flex items-center gap-1 truncate text-[11px] font-semibold text-subtask-600">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="shrink-0"
+                >
+                  <polyline points="9 10 4 15 9 20" />
+                  <path d="M20 4v7a4 4 0 0 1-4 4H4" />
+                </svg>
+                <span className="truncate">{task.parent_title}</span>
+              </p>
+            )}
             <textarea
               ref={titleRef}
               value={form.title}
@@ -386,7 +395,7 @@ export function TaskDetailPanel({
                   >
                     <span
                       className="h-1.5 w-1.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: STAGE_ACCENT[c.stage] }}
+                      style={{ backgroundColor: TASK_STAGE_ACCENT[c.stage] }}
                     />
                     <span
                       className={`min-w-0 flex-1 truncate text-sm ${

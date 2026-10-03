@@ -18,6 +18,13 @@
   --brand-500: 58 138 116;
   --brand-400: 79 168 143;
   --brand-100: 226 242 236;
+  /* Structural accent for "this is a subtask" cues - deliberately not the
+     brand teal, which already means "interactive/focused" everywhere else.
+     Reuses the plum already present in TAG_COLORS so it still feels native
+     to the app's palette instead of introducing a new hue. */
+  --subtask-600: 122 47 84;
+  --subtask-500: 193 91 140;
+  --subtask-100: 250 234 242;
   /* Always near-black, in both themes - for filled dark buttons
      (paired with text-white) and modal backdrop scrims, neither of
      which should flip to a near-white background in dark mode the
@@ -39,6 +46,9 @@
   --brand-500: 79 168 143;
   --brand-400: 102 189 165;
   --brand-100: 30 58 51;
+  --subtask-600: 224 150 189;
+  --subtask-500: 203 110 155;
+  --subtask-100: 46 30 40;
 }
 
 html,
