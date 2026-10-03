@@ -1,6 +1,8 @@
 # Changelog
 
 [Unreleased]
+- 2026-10-03 release v1.2.1
+- 2026-10-03 - Gave subtasks their own centralized accent color (plum) instead of reusing the interactive brand teal, and showed the parent task's title in the subtask panel header
 - 2026-10-03 - Fixed a broken (white) subtask panel border and blocked nesting subtasks inside subtasks
 - 2026-10-03 - Moved the Backlogba button to the footer and gave the subtask detail panel a subtle visual distinction
 - 2026-10-02 - Fixed subtask position (now inserts under its parent), stale progress badge counts, and the badge icon
