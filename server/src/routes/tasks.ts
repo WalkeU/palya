@@ -24,6 +24,13 @@ tasksRouter.post("/", (req, res) => {
       .status(400)
       .json({ error: "invalid_input", details: parsed.error.flatten() });
   }
+  if (parsed.data.parent_task_id) {
+    const parent = tasksRepo.findById(parsed.data.parent_task_id);
+    if (!parent) return res.status(400).json({ error: "parent_not_found" });
+    if (parent.parent_task_id) {
+      return res.status(400).json({ error: "nested_subtasks_not_allowed" });
+    }
+  }
   const user = (req as any).user;
   const task = tasksRepo.create(parsed.data, user.id);
   res.status(201).json({ task });

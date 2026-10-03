@@ -175,7 +175,7 @@ export function TaskDetailPanel({
       />
       <aside
         className={`fixed right-0 top-0 z-40 flex h-full w-full max-w-md animate-panel-in flex-col border-l bg-ink-50 shadow-panel ${
-          task.parent_task_id ? "border-brand-300" : "border-ink-100"
+          task.parent_task_id ? "border-brand-400" : "border-ink-100"
         }`}
       >
         <div
@@ -365,51 +365,53 @@ export function TaskDetailPanel({
             </div>
           </section>
 
-          <section className="mb-5">
-            <span className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-ink-500">
-              Alfeladatok
-              {children.length > 0 && (
-                <span className="normal-case tracking-normal text-ink-500">
-                  {children.filter((c) => c.stage === "done" || c.stage === "closed").length}/
-                  {children.length}
-                </span>
-              )}
-            </span>
-            <div className="space-y-1">
-              {children.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => onOpenTask(c)}
-                  className="flex w-full items-center gap-2 rounded-lg px-1 py-1.5 text-left transition hover:bg-ink-100/60"
-                >
-                  <span
-                    className="h-1.5 w-1.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: STAGE_ACCENT[c.stage] }}
-                  />
-                  <span
-                    className={`min-w-0 flex-1 truncate text-sm ${
-                      c.stage === "done" || c.stage === "closed"
-                        ? "text-ink-500 line-through"
-                        : "text-ink-900"
-                    }`}
-                  >
-                    {c.title}
+          {!task.parent_task_id && (
+            <section className="mb-5">
+              <span className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-ink-500">
+                Alfeladatok
+                {children.length > 0 && (
+                  <span className="normal-case tracking-normal text-ink-500">
+                    {children.filter((c) => c.stage === "done" || c.stage === "closed").length}/
+                    {children.length}
                   </span>
-                  {c.assignee_id && (
-                    <Avatar
-                      avatar={c.assignee_avatar}
-                      name={c.assignee_nickname || c.assignee_email}
-                      size={18}
+                )}
+              </span>
+              <div className="space-y-1">
+                {children.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => onOpenTask(c)}
+                    className="flex w-full items-center gap-2 rounded-lg px-1 py-1.5 text-left transition hover:bg-ink-100/60"
+                  >
+                    <span
+                      className="h-1.5 w-1.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: STAGE_ACCENT[c.stage] }}
                     />
-                  )}
-                </button>
-              ))}
-              {children.length === 0 && (
-                <p className="text-sm text-ink-500">Még nincs egy alfeladat sem.</p>
-              )}
-            </div>
-          </section>
+                    <span
+                      className={`min-w-0 flex-1 truncate text-sm ${
+                        c.stage === "done" || c.stage === "closed"
+                          ? "text-ink-500 line-through"
+                          : "text-ink-900"
+                      }`}
+                    >
+                      {c.title}
+                    </span>
+                    {c.assignee_id && (
+                      <Avatar
+                        avatar={c.assignee_avatar}
+                        name={c.assignee_nickname || c.assignee_email}
+                        size={18}
+                      />
+                    )}
+                  </button>
+                ))}
+                {children.length === 0 && (
+                  <p className="text-sm text-ink-500">Még nincs egy alfeladat sem.</p>
+                )}
+              </div>
+            </section>
+          )}
 
           <section>
             <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-ink-500">
@@ -465,12 +467,14 @@ export function TaskDetailPanel({
               )}
             </div>
             <div className="flex shrink-0 items-center gap-3">
-              <button
-                onClick={() => setAddingSubtask(true)}
-                className="text-xs font-medium text-ink-500 transition hover:text-ink-900"
-              >
-                + Alfeladat
-              </button>
+              {!task.parent_task_id && (
+                <button
+                  onClick={() => setAddingSubtask(true)}
+                  className="text-xs font-medium text-ink-500 transition hover:text-ink-900"
+                >
+                  + Alfeladat
+                </button>
+              )}
               <button
                 onClick={handleDelete}
                 className="text-xs font-medium text-ink-500 transition hover:text-scale-1"
