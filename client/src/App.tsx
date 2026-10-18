@@ -5,6 +5,7 @@ import ChangePassword from "./pages/ChangePassword";
 import Home from "./pages/Home";
 import Board from "./pages/Board";
 import Tasks from "./pages/Tasks";
+import Expenses from "./pages/Expenses";
 
 function LoadingScreen() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/ugyfelek" element={<Board />} />
       <Route path="/feladatok" element={<Tasks />} />
+      <Route path="/koltsegek" element={<Expenses />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

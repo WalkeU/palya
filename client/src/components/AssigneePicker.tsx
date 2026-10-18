@@ -6,10 +6,12 @@ export function AssigneePicker({
   members,
   value,
   onChange,
+  allowEmpty = true,
 }: {
   members: TeamMember[];
   value: string;
   onChange: (value: string) => void;
+  allowEmpty?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -67,13 +69,15 @@ export function AssigneePicker({
 
       {open && (
         <div className="absolute z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-ink-100 bg-surface py-1 shadow-panel">
-          <button
-            type="button"
-            onClick={() => select("")}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink-500 transition hover:bg-ink-50"
-          >
-            Nincs hozzárendelve
-          </button>
+          {allowEmpty && (
+            <button
+              type="button"
+              onClick={() => select("")}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink-500 transition hover:bg-ink-50"
+            >
+              Nincs hozzárendelve
+            </button>
+          )}
           {members.map((m) => (
             <button
               key={m.id}

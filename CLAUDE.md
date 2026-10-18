@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-"Pálya" is a self-hosted, Dockerized, Hungarian-language team app: a customer-tracking Kanban board, a team task-tracking Kanban board, and a home page with shared notes/polls/links. UI text, comments in migrations, and commit conventions are in Hungarian; keep new user-facing text in Hungarian to match.
+"Pálya" is a self-hosted, Dockerized, Hungarian-language team app: a customer-tracking Kanban board, a team task-tracking Kanban board, a home page with shared notes/polls/links, and an expense log (`/koltsegek`). UI text, comments in migrations, and commit conventions are in Hungarian; keep new user-facing text in Hungarian to match.
 
 ## Commands
 
@@ -22,7 +22,7 @@ npm run build    # tsc -b && vite build -> ../client-dist/ (also typechecks)
 
 # Full stack via Docker (from repo root)
 docker compose up --build -d
-docker compose logs -f ugyfelkoveto
+docker compose logs -f palya
 ```
 
 Always run both the server typecheck and the client build before considering a change done - there's no CI catching regressions otherwise.
@@ -52,7 +52,9 @@ Re-query `cols` between sequential migrations touching the same table. Changing 
 
 **Frontend structure:** `pages/*.tsx` are route-level (`App.tsx` wires them to `react-router-dom`), `components/*.tsx` are shared UI, `context/*.tsx` are small hand-rolled providers (`AuthContext`, `ThemeContext`, `ToastContext` - no external state library). Drag-and-drop everywhere (`Board.tsx`, `Tasks.tsx`, `Home.tsx`'s notes grid) uses `@dnd-kit/core` + `@dnd-kit/sortable` with the same shape: `useSensor(PointerSensor, {activationConstraint:{distance:5}})`, `DndContext`/`SortableContext`/`DragOverlay`, and a droppable per column/zone via `useDroppable`.
 
-**Theming:** colors are CSS custom properties on `:root`/`.dark` (`client/src/styles/index.css`) consumed through Tailwind's `rgb(var(--x) / <alpha-value>)` pattern (`tailwind.config.js`) so opacity modifiers keep working; `ThemeContext` toggles the `.dark` class and persists to `localStorage`. The `scale-*` accent colors and per-domain accent hexes (`STAGES`, `TASK_STAGES`, tag palette in `client/src/types.ts`) are intentionally the same in both themes.
+**Expenses** (`/koltsegek`, `pages/Expenses.tsx` + `components/ExpenseModal.tsx`): amounts are whole forints (`INTEGER`), `spent_on` is a local `YYYY-MM-DD` date string, categories are a fixed enum kept in sync between `EXPENSE_CATEGORIES` in `server/src/utils/validation.ts` and `client/src/types.ts` (the DB `CHECK` too, so adding one means the table-rebuild dance). `settled` ("Elszámolva", payer has been paid back) is toggled optimistically from the list row via `PATCH { settled }` and rolled back on error. The page fetches all expenses once and does period/person/category/search filtering client-side; the selected month lives in the `?honap=` query param. Money/date formatting helpers are in `client/src/utils/format.ts`.
+
+**Theming:** colors are CSS custom properties on `:root`/`.dark` (`client/src/styles/index.css`) consumed through Tailwind's `rgb(var(--x) / <alpha-value>)` pattern (`tailwind.config.js`) so opacity modifiers keep working; `ThemeContext` toggles the `.dark` class and persists to `localStorage`. The `scale-*` accent colors and per-domain accent hexes (`STAGES`, `TASK_STAGES`, tag palette in `client/src/types.ts`) are intentionally the same in both themes. `brand-*` means "interactive/focused" (buttons, focus rings, links) - don't reuse it for a merely structural cue; `subtask-*` exists for exactly that (the subtask detail panel's border/header tint), themed separately per light/dark like `brand`/`ink`. Stage-dot colors for every `TaskStage` (including `backlog`/`closed`, which aren't in the 5-entry `TASK_STAGES` board-column array) live in one place: `TASK_STAGE_ACCENT` in `client/src/types.ts` - don't hand-copy accent hexes into a component-local map again.
 
 **Known CSS trap:** a `backdrop-blur` (i.e. `backdrop-filter`) ancestor becomes a containing block for `position: fixed` descendants, clipping full-viewport modals to that ancestor's box. `TopBar.tsx`'s header uses `backdrop-blur`, so `SettingsModal` is rendered as a sibling (via a Fragment), not a child, of the header.
 

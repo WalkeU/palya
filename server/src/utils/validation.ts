@@ -215,6 +215,52 @@ export const updateLinkSchema = z.object({
   icon: linkIconField,
 });
 
+// Keep in sync with EXPENSE_CATEGORIES in client/src/types.ts.
+export const EXPENSE_CATEGORIES = [
+  "software",
+  "equipment",
+  "marketing",
+  "travel",
+  "office",
+  "other",
+] as const;
+
+// Amounts are whole forints - HUF has no fractional unit in everyday use.
+const expenseAmountField = z
+  .number()
+  .int("Az összeg csak egész szám lehet")
+  .min(1, "Az összegnek pozitívnak kell lennie")
+  .max(1_000_000_000);
+const expenseDateField = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Érvénytelen dátum")
+  .refine((v) => {
+    // Round-trip check: rejects calendar-invalid days like 2026-02-31,
+    // which Date.parse would silently roll over into March.
+    const d = new Date(`${v}T00:00:00Z`);
+    return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
+  }, "Érvénytelen dátum");
+
+export const createExpenseSchema = z.object({
+  title: z.string().trim().min(1, "A megnevezés megadása kötelező").max(120),
+  amount: expenseAmountField,
+  spent_on: expenseDateField,
+  category: z.enum(EXPENSE_CATEGORIES).default("other"),
+  paid_by: z.number().int().nullable().optional(),
+  note: z.string().trim().max(1000).nullable().optional(),
+  settled: z.boolean().optional(),
+});
+
+export const updateExpenseSchema = z.object({
+  title: z.string().trim().min(1).max(120).optional(),
+  amount: expenseAmountField.optional(),
+  spent_on: expenseDateField.optional(),
+  category: z.enum(EXPENSE_CATEGORIES).optional(),
+  paid_by: z.number().int().nullable().optional(),
+  note: z.string().trim().max(1000).nullable().optional(),
+  settled: z.boolean().optional(),
+});
+
 export const updateAppSettingsSchema = z.object({
   linksEnabled: z.boolean().optional(),
   autoCloseDays: z.number().int().min(1).max(365).optional(),

@@ -128,6 +128,19 @@ db.exec(`
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  CREATE TABLE IF NOT EXISTS expenses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    amount INTEGER NOT NULL CHECK (amount > 0),
+    spent_on TEXT NOT NULL,
+    category TEXT NOT NULL CHECK (category IN ('software', 'equipment', 'marketing', 'travel', 'office', 'other')) DEFAULT 'other',
+    paid_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    note TEXT,
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
   CREATE TABLE IF NOT EXISTS app_settings (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -137,6 +150,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_comments_customer ON comments(customer_id);
   CREATE INDEX IF NOT EXISTS idx_tasks_stage ON tasks(stage);
   CREATE INDEX IF NOT EXISTS idx_task_comments_task ON task_comments(task_id);
+  CREATE INDEX IF NOT EXISTS idx_expenses_spent_on ON expenses(spent_on);
 `);
 
 // Migration: `business` column and `name` becoming nullable were added
@@ -277,4 +291,11 @@ taskColumns = db.prepare("PRAGMA table_info(tasks)").all() as ColumnInfo[];
 if (!taskColumns.some((c) => c.name === "parent_task_id")) {
   db.exec("ALTER TABLE tasks ADD COLUMN parent_task_id INTEGER");
   db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_parent ON tasks(parent_task_id)");
+}
+
+// Migration: `settled` marks an expense as paid back to whoever fronted the
+// money ("Elszámolva"), so the expenses page can show who is still owed what.
+const expenseColumns = db.prepare("PRAGMA table_info(expenses)").all() as ColumnInfo[];
+if (!expenseColumns.some((c) => c.name === "settled")) {
+  db.exec("ALTER TABLE expenses ADD COLUMN settled INTEGER NOT NULL DEFAULT 0");
 }
