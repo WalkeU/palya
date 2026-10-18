@@ -22,7 +22,7 @@ npm run build    # tsc -b && vite build -> ../client-dist/ (also typechecks)
 
 # Full stack via Docker (from repo root)
 docker compose up --build -d
-docker compose logs -f ugyfelkoveto
+docker compose logs -f palya
 ```
 
 Always run both the server typecheck and the client build before considering a change done - there's no CI catching regressions otherwise.

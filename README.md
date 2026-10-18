@@ -23,7 +23,7 @@ Az app a `.env`-ben megadott `PORT`-on érhető el.
 Első indításkor a rendszer létrehozza a superadmin usert (a `.env`-ben megadott `SEED_ADMIN_EMAIL`-lel) és kiírja a generált jelszavát a logba. **Csak ekkor, egyszer.**
 
 ```bash
-docker compose logs ugyfelkoveto | grep -A2 Jelszó
+docker compose logs palya | grep -A2 Jelszó
 ```
 
 Ezzel a jelszóval kell először belépni, utána kötelező lecserélni.
@@ -33,7 +33,7 @@ Ezzel a jelszóval kell először belépni, utána kötelező lecserélni.
 Az adatbázis egy Docker-kezelt named volume-ban van (`docker volume ls` → `..._data`), nem a projekt mappájában, mert ez host-független és mindenhol megbízhatóan írható. Mentéshez:
 
 ```bash
-docker run --rm -v ugyfelkoveto_data:/data -v "$(pwd)":/backup alpine tar czf /backup/adatok.tar.gz -C /data .
+docker run --rm -v palya_data:/data -v "$(pwd)":/backup alpine tar czf /backup/adatok.tar.gz -C /data .
 ```
 
 (a volume nevét `docker volume ls`-ből ellenőrizd, ha más a compose projekt neve).
