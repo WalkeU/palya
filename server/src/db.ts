@@ -141,6 +141,14 @@ db.exec(`
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  -- Who an expense is split between (the "Költségmegosztás" feature). No rows
+  -- means "everyone", which is also how expenses logged before the feature read.
+  CREATE TABLE IF NOT EXISTS expense_participants (
+    expense_id INTEGER NOT NULL REFERENCES expenses(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (expense_id, user_id)
+  );
+
   CREATE TABLE IF NOT EXISTS app_settings (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL

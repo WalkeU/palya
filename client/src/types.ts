@@ -169,6 +169,8 @@ export interface Expense {
   note: string | null;
   /** "Elszámolva": the payer has been paid back. */
   settled: boolean;
+  /** User ids the expense is split between; empty means everyone. */
+  split_with: number[];
   created_by: number | null;
   created_at: string;
   updated_at: string;
@@ -197,6 +199,8 @@ export interface AppSettings {
   linksEnabled: boolean;
   autoCloseDays: number;
   customerPrimaryField: CustomerPrimaryField;
+  /** "Költségmegosztás": split unsettled expenses and show who owes whom. */
+  expenseSplitEnabled: boolean;
 }
 
 export interface TeamMember {

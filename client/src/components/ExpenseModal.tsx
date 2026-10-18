@@ -3,9 +3,11 @@ import type { Expense, ExpenseCategory, TeamMember } from "../types";
 import { EXPENSE_CATEGORIES } from "../types";
 import { api } from "../api/client";
 import { AssigneePicker } from "./AssigneePicker";
+import { Avatar } from "./Avatar";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { useEscapeToClose } from "../hooks/useEscapeToClose";
-import { formatGrouped, todayIso } from "../utils/format";
+import { formatGrouped, formatHuf, todayIso } from "../utils/format";
+import { sharesOf } from "../utils/split";
 
 const inputClass =
   "w-full rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-surface focus:ring-2 focus:ring-brand-100";
@@ -21,6 +23,7 @@ export function ExpenseModal({
   expense,
   members,
   currentUserId,
+  splitEnabled,
   onClose,
   onSaved,
   onDeleted,
@@ -29,6 +32,8 @@ export function ExpenseModal({
   expense?: Expense;
   members: TeamMember[];
   currentUserId: number;
+  /** "Költségmegosztás" setting: shows the who-shares-this picker. */
+  splitEnabled: boolean;
   onClose: () => void;
   onSaved: (e: Expense, isNew: boolean) => void;
   onDeleted: (id: number) => void;
@@ -47,8 +52,33 @@ export function ExpenseModal({
   );
   const [note, setNote] = useState(expense?.note ?? "");
   const [settled, setSettled] = useState(expense?.settled ?? false);
+  // Defaults to everyone; an expense saved with an explicit list keeps it, so
+  // someone joining later isn't charged for things bought before they joined.
+  const [splitWith, setSplitWith] = useState<number[]>(() =>
+    expense && expense.split_with.length > 0 ? expense.split_with : members.map((m) => m.id)
+  );
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ title?: string; amount?: string; form?: string }>({});
+  const [errors, setErrors] = useState<{
+    title?: string;
+    amount?: string;
+    split?: string;
+    form?: string;
+  }>({});
+
+  const amountPreview = Number(amountDigits) || 0;
+  const shares = sharesOf(
+    { amount: amountPreview, paid_by: paidBy ? Number(paidBy) : null, split_with: splitWith },
+    []
+  );
+  const shareValues = [...shares.values()];
+  const minShare = Math.min(...shareValues);
+  const maxShare = Math.max(...shareValues);
+
+  function toggleParticipant(id: number) {
+    setSplitWith((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id].sort((a, b) => a - b)
+    );
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -56,6 +86,9 @@ export function ExpenseModal({
     const nextErrors: typeof errors = {};
     if (!title.trim()) nextErrors.title = "Add meg, mit vettetek.";
     if (!amountDigits || amount <= 0) nextErrors.amount = "Adj meg egy pozitív összeget.";
+    if (splitEnabled && splitWith.length === 0) {
+      nextErrors.split = "Legalább egy embert jelölj ki.";
+    }
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
@@ -68,6 +101,7 @@ export function ExpenseModal({
       paid_by: paidBy ? Number(paidBy) : null,
       note: note.trim() || null,
       settled,
+      ...(splitEnabled ? { split_with: splitWith } : {}),
     };
     try {
       const data = !expense
@@ -180,6 +214,63 @@ export function ExpenseModal({
               allowEmpty={false}
             />
           </div>
+
+          {splitEnabled && (
+            <div role="group" aria-label="Megosztva" className="mb-3.5">
+              <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                <span className={`${labelClass} !mb-0`}>Megosztva</span>
+                {splitWith.length !== members.length && (
+                  <button
+                    type="button"
+                    onClick={() => setSplitWith(members.map((m) => m.id))}
+                    className="text-xs font-medium text-brand-600 transition hover:text-brand-500"
+                  >
+                    Mindenki
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {members.map((m) => {
+                  const active = splitWith.includes(m.id);
+                  const name = m.nickname || m.email;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => toggleParticipant(m.id)}
+                      className="flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-2.5 text-xs font-medium transition"
+                      style={{
+                        borderColor: active ? "rgb(var(--brand-400))" : "rgb(var(--ink-100))",
+                        backgroundColor: active ? "rgb(var(--brand-100))" : "rgb(var(--ink-50))",
+                        color: active ? "rgb(var(--ink-950))" : "rgb(var(--ink-500))",
+                        opacity: active ? 1 : 0.7,
+                      }}
+                    >
+                      <Avatar avatar={m.avatar} name={name} size={20} />
+                      {name}
+                    </button>
+                  );
+                })}
+              </div>
+              {errors.split ? (
+                <p className="mt-1 text-xs text-scale-1">{errors.split}</p>
+              ) : (
+                splitWith.length > 0 &&
+                amountPreview > 0 && (
+                  <p className="mt-1.5 text-xs text-ink-500">
+                    {splitWith.length} fő között, fejenként{" "}
+                    <span className="font-medium tabular-nums text-ink-700">
+                      {minShare === maxShare
+                        ? formatHuf(minShare)
+                        : `${formatGrouped(minShare)}-${formatHuf(maxShare)}`}
+                    </span>
+                    . A fizető saját része automatikusan levonódik.
+                  </p>
+                )
+              )}
+            </div>
+          )}
 
           <fieldset className="mb-3.5">
             <legend className={labelClass}>Kategória</legend>

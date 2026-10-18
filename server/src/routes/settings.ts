@@ -14,6 +14,7 @@ function readSettings() {
     customerPrimaryField:
       (appSettingsRepo.get("customerPrimaryField") as "name" | "business" | undefined) ||
       "name",
+    expenseSplitEnabled: appSettingsRepo.getBool("expenseSplitEnabled", false),
   };
 }
 
@@ -34,6 +35,9 @@ settingsRouter.patch("/", (req, res) => {
   }
   if (parsed.data.customerPrimaryField !== undefined) {
     appSettingsRepo.set("customerPrimaryField", parsed.data.customerPrimaryField);
+  }
+  if (parsed.data.expenseSplitEnabled !== undefined) {
+    appSettingsRepo.setBool("expenseSplitEnabled", parsed.data.expenseSplitEnabled);
   }
   res.json(readSettings());
 });

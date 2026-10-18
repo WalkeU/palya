@@ -471,6 +471,7 @@ function LinksTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void }
     linksEnabled: true,
     autoCloseDays: 30,
     customerPrimaryField: "name",
+    expenseSplitEnabled: false,
   });
   const [loading, setLoading] = useState(true);
   const [togglingVisibility, setTogglingVisibility] = useState(false);
@@ -819,6 +820,66 @@ function CustomersSettingsTab() {
   );
 }
 
+function ExpensesSettingsTab() {
+  const { showToast } = useToast();
+  const [enabled, setEnabled] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    api<AppSettings>("/api/settings").then((d) => {
+      setEnabled(d.expenseSplitEnabled);
+      setLoading(false);
+    });
+  }, []);
+
+  async function handleToggle() {
+    setSaving(true);
+    try {
+      const next = await api<AppSettings>("/api/settings", {
+        method: "PATCH",
+        body: { expenseSplitEnabled: !enabled },
+      });
+      setEnabled(next.expenseSplitEnabled);
+      showToast(
+        next.expenseSplitEnabled ? "Költségmegosztás bekapcsolva" : "Költségmegosztás kikapcsolva"
+      );
+    } catch {
+      showToast("Nem sikerült módosítani a beállítást.", "error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <SettingsCard title="Költségmegosztás">
+      <div className="flex items-center justify-between gap-4">
+        <p className="max-w-sm text-sm text-ink-500">
+          Az elszámolatlan tételeket szétosztja a résztvevők között (alapból mindenki között
+          egyenlően, tételenként módosítható), levonja, amit ki-ki már kifizetett, és a
+          Költségek oldalon kiírja, ki kinek mennyivel tartozik.
+        </p>
+        <button
+          type="button"
+          onClick={handleToggle}
+          disabled={saving || loading}
+          aria-pressed={enabled}
+          aria-label="Költségmegosztás"
+          className="relative h-7 w-12 shrink-0 rounded-full transition disabled:opacity-60"
+          style={{
+            backgroundColor: enabled ? "rgb(var(--night))" : "rgb(var(--ink-100))",
+          }}
+        >
+          <span
+            className="absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all"
+            style={{ left: enabled ? "26px" : "4px" }}
+          />
+        </button>
+      </div>
+    </SettingsCard>
+  );
+}
+
 function TasksSettingsTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void }) {
   const { showToast } = useToast();
   const [autoCloseDays, setAutoCloseDays] = useState<string>("30");
@@ -895,7 +956,15 @@ function TasksSettingsTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) =
   );
 }
 
-type Tab = "profil" | "jelszo" | "cimkek" | "linkek" | "ugyfelek" | "feladatok" | "felhasznalok";
+type Tab =
+  | "profil"
+  | "jelszo"
+  | "cimkek"
+  | "linkek"
+  | "ugyfelek"
+  | "feladatok"
+  | "koltsegek"
+  | "felhasznalok";
 
 export function SettingsModal({ onClose }: { onClose: () => void }) {
   const { user } = useAuth();
@@ -926,6 +995,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
     { key: "linkek", label: "Linkek" },
     { key: "ugyfelek", label: "Ügyfelek" },
     { key: "feladatok", label: "Feladatok" },
+    { key: "koltsegek", label: "Költségek" },
     ...(isSuperAdmin ? [{ key: "felhasznalok" as Tab, label: "Felhasználók" }] : []),
   ];
 
@@ -986,6 +1056,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
             {tab === "feladatok" && (
               <TasksSettingsTab onDirtyChange={(d) => setTabDirty("feladatok", d)} />
             )}
+            {tab === "koltsegek" && <ExpensesSettingsTab />}
             {tab === "felhasznalok" && isSuperAdmin && (
               <div>
                 <h2 className="mb-4 font-display text-lg font-medium text-ink-950">

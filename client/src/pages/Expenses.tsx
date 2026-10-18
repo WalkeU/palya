@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import type { Expense, ExpenseCategory, TeamMember } from "../types";
+import type { AppSettings, Expense, ExpenseCategory, TeamMember } from "../types";
 import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_BY_KEY } from "../types";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -8,6 +8,7 @@ import { useToast } from "../context/ToastContext";
 import { TopBar } from "../components/TopBar";
 import { Avatar } from "../components/Avatar";
 import { ExpenseModal } from "../components/ExpenseModal";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { PeopleFilterBar, type PersonFilter } from "../components/PeopleFilterBar";
 import {
   currentMonthKey,
@@ -17,6 +18,7 @@ import {
   formatMonthLabel,
   shiftMonth,
 } from "../utils/format";
+import { balancesOf, transfersOf } from "../utils/split";
 
 // `?honap=2026-10` or `?honap=osszes` - kept in the URL so a filtered view
 // can be bookmarked/shared and survives a reload.
@@ -290,6 +292,111 @@ function SummaryCard({
   );
 }
 
+function memberName(m: TeamMember | undefined): string {
+  return m ? m.nickname || m.email : "Ismeretlen";
+}
+
+function SplitCard({
+  members,
+  openExpenses,
+  onSettleAll,
+}: {
+  members: TeamMember[];
+  /** Every unsettled expense, regardless of the period/filters in view. */
+  openExpenses: Expense[];
+  onSettleAll: () => void;
+}) {
+  const byId = new Map(members.map((m) => [m.id, m]));
+  const balances = balancesOf(
+    openExpenses,
+    members.map((m) => m.id)
+  );
+  const transfers = transfersOf(balances);
+  const people = [...balances].filter(([, b]) => b !== 0).sort((a, b) => b[1] - a[1]);
+  const unattributed = openExpenses.filter((e) => e.paid_by == null).length;
+
+  return (
+    <section
+      aria-label="Elszámolás"
+      className="rounded-2xl border border-ink-100 bg-surface shadow-card"
+    >
+      <div className="px-5 pb-3 pt-5">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-500">
+          Ki kinek mennyivel jön
+        </h2>
+        <p className="mt-1 text-[11px] text-ink-500">
+          Az összes elszámolatlan tétel alapján, a kiválasztott időszaktól függetlenül.
+        </p>
+      </div>
+
+      {transfers.length === 0 ? (
+        <p className="flex items-center gap-1.5 border-t border-ink-100 px-5 py-4 text-sm text-ink-500">
+          <span className="text-brand-500">
+            <CheckIcon />
+          </span>
+          Mindenki kvittben van.
+        </p>
+      ) : (
+        <>
+          <ul className="flex flex-col gap-2 border-t border-ink-100 px-5 py-4">
+            {transfers.map((t) => {
+              const from = byId.get(t.from);
+              const to = byId.get(t.to);
+              return (
+                <li key={`${t.from}-${t.to}`} className="flex items-center gap-2 text-sm">
+                  <Avatar avatar={from?.avatar} name={memberName(from)} size={22} />
+                  <span className="min-w-0 truncate text-ink-900">{memberName(from)}</span>
+                  <span className="shrink-0 text-ink-300" aria-label="fizet neki">
+                    →
+                  </span>
+                  <Avatar avatar={to?.avatar} name={memberName(to)} size={22} />
+                  <span className="min-w-0 flex-1 truncate text-ink-900">{memberName(to)}</span>
+                  <span className="shrink-0 font-semibold tabular-nums text-ink-950">
+                    {formatHuf(t.amount)}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="border-t border-ink-100 px-5 py-4">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-500">
+              Egyenleg
+            </h3>
+            <ul className="flex flex-col gap-1">
+              {people.map(([id, b]) => (
+                <li key={id} className="flex items-center gap-2 text-xs">
+                  <span className="min-w-0 flex-1 truncate text-ink-700">
+                    {memberName(byId.get(id))}
+                  </span>
+                  <span
+                    className={`font-medium tabular-nums ${b > 0 ? "text-brand-600" : "text-ink-950"}`}
+                  >
+                    {b > 0 ? `+${formatHuf(b)} jár neki` : `${formatHuf(-b)} tartozás`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              onClick={onSettleAll}
+              className="mt-4 w-full rounded-lg border border-ink-100 px-3 py-2 text-sm font-medium text-ink-700 transition hover:border-ink-300 hover:text-ink-950"
+            >
+              Kiegyenlítettük, mind elszámolva
+            </button>
+          </div>
+        </>
+      )}
+
+      {unattributed > 0 && (
+        <p className="border-t border-ink-100 px-5 py-3 text-[11px] text-ink-500">
+          {unattributed} elszámolatlan tételnél nincs megadva fizető, ezek kimaradnak.
+        </p>
+      )}
+    </section>
+  );
+}
+
 export default function Expenses() {
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -304,6 +411,8 @@ export default function Expenses() {
   const [onlyOpen, setOnlyOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [creating, setCreating] = useState(false);
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [confirmingSettleAll, setConfirmingSettleAll] = useState(false);
 
   const monthParam = searchParams.get("honap");
   const month: string | null =
@@ -330,10 +439,12 @@ export default function Expenses() {
     Promise.all([
       api<{ expenses: Expense[] }>("/api/expenses"),
       api<{ members: TeamMember[] }>("/api/members"),
+      api<AppSettings>("/api/settings"),
     ])
-      .then(([expenseData, memberData]) => {
+      .then(([expenseData, memberData, settingsData]) => {
         setExpenses(expenseData.expenses);
         setMembers(memberData.members);
+        setSplitEnabled(settingsData.expenseSplitEnabled);
       })
       .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
@@ -456,6 +567,22 @@ export default function Expenses() {
     } catch {
       apply(!next);
       showToast("Nem sikerült módosítani az elszámolást.", "error");
+    }
+  }
+
+  // Expenses without a payer can't be split, so settling up leaves them alone.
+  const splitOpen = expenses.filter((e) => !e.settled && e.paid_by != null);
+
+  async function settleAll() {
+    const ids = splitOpen.map((e) => e.id);
+    setConfirmingSettleAll(false);
+    try {
+      await api("/api/expenses/settle", { method: "POST", body: { ids } });
+      const done = new Set(ids);
+      setExpenses((prev) => prev.map((e) => (done.has(e.id) ? { ...e, settled: true } : e)));
+      showToast(`${ids.length} tétel elszámolva`);
+    } catch {
+      showToast("Nem sikerült elszámolni a tételeket.", "error");
     }
   }
 
@@ -635,7 +762,7 @@ export default function Expenses() {
           </div>
         ) : (
           <div className="mx-auto grid max-w-[1100px] grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-6">
-            <div className="lg:sticky lg:top-0 lg:order-2">
+            <div className="flex flex-col gap-5 lg:sticky lg:top-0 lg:order-2">
               <SummaryCard
                 periodLabel={periodLabel}
                 total={total}
@@ -649,6 +776,13 @@ export default function Expenses() {
                 onTogglePerson={(id) => setPersonFilter((cur) => (cur === id ? null : id))}
                 onToggleCategory={(key) => setCategoryFilter((cur) => (cur === key ? null : key))}
               />
+              {splitEnabled && (
+                <SplitCard
+                  members={members}
+                  openExpenses={expenses.filter((e) => !e.settled)}
+                  onSettleAll={() => setConfirmingSettleAll(true)}
+                />
+              )}
             </div>
 
             <div className="lg:order-1">
@@ -715,6 +849,10 @@ export default function Expenses() {
                                   </span>
                                   <span className="block truncate text-xs text-ink-500">
                                     {cat.label}
+                                    {splitEnabled &&
+                                      e.split_with.length > 0 &&
+                                      e.split_with.length !== members.length &&
+                                      ` · ${e.split_with.length} fő között`}
                                     {e.note && ` · ${e.note}`}
                                   </span>
                                 </span>
@@ -770,12 +908,23 @@ export default function Expenses() {
           expense={editing ?? undefined}
           members={members}
           currentUserId={user.id}
+          splitEnabled={splitEnabled}
           onClose={() => {
             setCreating(false);
             setEditing(null);
           }}
           onSaved={handleSaved}
           onDeleted={handleDeleted}
+        />
+      )}
+
+      {confirmingSettleAll && (
+        <ConfirmDialog
+          title="Elszámolás lezárása"
+          message={`Megtörténtek a fenti átutalások? Mind a(z) ${splitOpen.length} elszámolatlan tétel „Elszámolva” lesz, és az egyenlegek lenullázódnak.`}
+          confirmLabel="Elszámolva"
+          onConfirm={settleAll}
+          onCancel={() => setConfirmingSettleAll(false)}
         />
       )}
     </div>
