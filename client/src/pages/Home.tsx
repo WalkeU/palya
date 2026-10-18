@@ -500,6 +500,7 @@ export default function Home() {
     linksEnabled: true,
     autoCloseDays: 30,
     customerPrimaryField: "name",
+    expenseSplitEnabled: false,
   });
   const [loading, setLoading] = useState(true);
   const [composing, setComposing] = useState(false);

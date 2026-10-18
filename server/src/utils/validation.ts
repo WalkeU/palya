@@ -249,6 +249,7 @@ export const createExpenseSchema = z.object({
   paid_by: z.number().int().nullable().optional(),
   note: z.string().trim().max(1000).nullable().optional(),
   settled: z.boolean().optional(),
+  split_with: z.array(z.number().int()).max(200).optional(),
 });
 
 export const updateExpenseSchema = z.object({
@@ -259,12 +260,18 @@ export const updateExpenseSchema = z.object({
   paid_by: z.number().int().nullable().optional(),
   note: z.string().trim().max(1000).nullable().optional(),
   settled: z.boolean().optional(),
+  split_with: z.array(z.number().int()).max(200).optional(),
+});
+
+export const settleExpensesSchema = z.object({
+  ids: z.array(z.number().int()).min(1).max(5000),
 });
 
 export const updateAppSettingsSchema = z.object({
   linksEnabled: z.boolean().optional(),
   autoCloseDays: z.number().int().min(1).max(365).optional(),
   customerPrimaryField: z.enum(["name", "business"]).optional(),
+  expenseSplitEnabled: z.boolean().optional(),
 });
 
 export const changeOwnPasswordSchema = z
