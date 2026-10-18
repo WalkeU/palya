@@ -103,6 +103,84 @@ export const LINK_ICONS = {
   ),
 } as const;
 
+// Settings modal tab icons, same Feather source (src/assets/icons/*.svg).
+export const SETTINGS_ICONS = {
+  user: (
+    <>
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </>
+  ),
+  lock: (
+    <>
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </>
+  ),
+  tag: (
+    <>
+      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+      <line x1="7" y1="7" x2="7.01" y2="7" />
+    </>
+  ),
+  "link-2": LINK_ICONS["link-2"],
+  briefcase: (
+    <>
+      <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+    </>
+  ),
+  "check-square": (
+    <>
+      <polyline points="9 11 12 14 22 4" />
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    </>
+  ),
+  "credit-card": (
+    <>
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+      <line x1="1" y1="10" x2="23" y2="10" />
+    </>
+  ),
+  users: (
+    <>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </>
+  ),
+} as const;
+
+export type SettingsIconName = keyof typeof SETTINGS_ICONS;
+
+export function SettingsIcon({
+  name,
+  className = "",
+  size = 16,
+}: {
+  name: SettingsIconName;
+  className?: string;
+  size?: number;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      {SETTINGS_ICONS[name]}
+    </svg>
+  );
+}
+
 export type LinkIconName = keyof typeof LINK_ICONS;
 
 export const LINK_ICON_NAMES = Object.keys(LINK_ICONS) as LinkIconName[];

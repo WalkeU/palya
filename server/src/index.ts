@@ -38,12 +38,22 @@ seedSuperAdmin();
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// `true` trusts X-Forwarded-* from any hop count. Deployments here often sit
-// behind more than one proxy (e.g. Cloudflare in front of a local reverse
-// proxy) - trusting only a fixed number of hops silently breaks `secure:
-// "auto"` cookie resolution below whenever that count is off, which is a
-// likely cause of inconsistent session persistence on some clients/networks.
-app.set("trust proxy", true);
+// Trust X-Forwarded-* only from proxies on loopback/private networks, however
+// many hops there are (e.g. Cloudflare in front of a local reverse proxy), so
+// `secure: "auto"` cookie resolution below keeps working without a fixed hop
+// count. Not `true`: that also trusts a client-supplied X-Forwarded-For, which
+// would let anyone dodge the per-IP rate limits (express-rate-limit refuses it
+// with ERR_ERL_PERMISSIVE_TRUST_PROXY). TRUST_PROXY in .env overrides this
+// with any Express "trust proxy" value (hop count, IP/subnet list).
+const trustProxyEnv = process.env.TRUST_PROXY?.trim();
+app.set(
+  "trust proxy",
+  trustProxyEnv
+    ? /^\d+$/.test(trustProxyEnv)
+      ? Number(trustProxyEnv)
+      : trustProxyEnv
+    : "loopback, linklocal, uniquelocal"
+);
 
 app.use(
   helmet({
@@ -86,7 +96,7 @@ app.use(
       // safe.
       sameSite: "lax",
       // "auto": Secure attribute is set when the request is actually HTTPS
-      // (directly, or via X-Forwarded-Proto since trust proxy is enabled).
+      // (directly, or via X-Forwarded-Proto from a trusted proxy).
       // A hardcoded `secure: true` would silently break sessions whenever
       // the app is reached over plain HTTP (e.g. proxy misconfigured, or
       // testing directly against the container).
