@@ -1008,7 +1008,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
         onClick={requestClose}
       />
       <div className="fixed inset-0 z-50 flex items-center justify-center px-3 py-6 sm:px-6">
-        <div className="flex h-full w-full max-w-3xl animate-rise-in flex-col overflow-hidden rounded-2xl border border-ink-100 bg-ink-50 shadow-panel">
+        <div className="flex h-full w-full max-w-5xl animate-rise-in flex-col overflow-hidden rounded-2xl border border-ink-100 bg-ink-50 shadow-panel">
           <div className="flex items-center justify-between border-b border-ink-100 bg-surface px-5 py-4">
             <h1 className="font-display text-xl font-medium text-ink-950">Beállítások</h1>
             <button
@@ -1031,7 +1031,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
             {/* Icon-only rail on phones, icon + label list from sm up. */}
             <nav
               aria-label="Beállítások"
-              className="flex w-14 shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-ink-100 bg-surface p-2 sm:w-48"
+              className="flex w-14 shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-ink-100 bg-surface p-2 sm:w-56 sm:p-3"
             >
               {tabs.map((t) => {
                 const active = tab === t.key;
