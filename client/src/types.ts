@@ -167,6 +167,8 @@ export interface Expense {
   payer_email: string | null;
   payer_avatar: string | null;
   note: string | null;
+  /** "Elszámolva": the payer has been paid back. */
+  settled: boolean;
   created_by: number | null;
   created_at: string;
   updated_at: string;

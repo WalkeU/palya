@@ -292,3 +292,10 @@ if (!taskColumns.some((c) => c.name === "parent_task_id")) {
   db.exec("ALTER TABLE tasks ADD COLUMN parent_task_id INTEGER");
   db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_parent ON tasks(parent_task_id)");
 }
+
+// Migration: `settled` marks an expense as paid back to whoever fronted the
+// money ("Elszámolva"), so the expenses page can show who is still owed what.
+const expenseColumns = db.prepare("PRAGMA table_info(expenses)").all() as ColumnInfo[];
+if (!expenseColumns.some((c) => c.name === "settled")) {
+  db.exec("ALTER TABLE expenses ADD COLUMN settled INTEGER NOT NULL DEFAULT 0");
+}

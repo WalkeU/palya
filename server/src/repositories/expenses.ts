@@ -19,6 +19,7 @@ export interface Expense {
   payer_email: string | null;
   payer_avatar: string | null;
   note: string | null;
+  settled: boolean;
   created_by: number | null;
   created_at: string;
   updated_at: string;
@@ -31,6 +32,13 @@ interface ExpenseInput {
   category: ExpenseCategory;
   paid_by?: number | null;
   note?: string | null;
+  settled?: boolean;
+}
+
+type ExpenseRow = Omit<Expense, "settled"> & { settled: number };
+
+function toExpense(row: ExpenseRow): Expense {
+  return { ...row, settled: !!row.settled };
 }
 
 const SELECT_EXPENSE = `
@@ -41,20 +49,24 @@ const SELECT_EXPENSE = `
 
 export const expensesRepo = {
   list(): Expense[] {
-    return db
+    const rows = db
       .prepare(`${SELECT_EXPENSE} ORDER BY e.spent_on DESC, e.id DESC`)
-      .all() as Expense[];
+      .all() as ExpenseRow[];
+    return rows.map(toExpense);
   },
 
   findById(id: number): Expense | undefined {
-    return db.prepare(`${SELECT_EXPENSE} WHERE e.id = ?`).get(id) as Expense | undefined;
+    const row = db.prepare(`${SELECT_EXPENSE} WHERE e.id = ?`).get(id) as
+      | ExpenseRow
+      | undefined;
+    return row ? toExpense(row) : undefined;
   },
 
   create(input: ExpenseInput, createdBy: number | null): Expense {
     const info = db
       .prepare(
-        `INSERT INTO expenses (title, amount, spent_on, category, paid_by, note, created_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO expenses (title, amount, spent_on, category, paid_by, note, settled, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         input.title,
@@ -63,6 +75,7 @@ export const expensesRepo = {
         input.category,
         input.paid_by ?? null,
         input.note || null,
+        input.settled ? 1 : 0,
         createdBy
       );
     return this.findById(info.lastInsertRowid as number)!;
@@ -78,10 +91,11 @@ export const expensesRepo = {
       category: patch.category ?? existing.category,
       paid_by: patch.paid_by !== undefined ? patch.paid_by : existing.paid_by,
       note: patch.note !== undefined ? patch.note || null : existing.note,
+      settled: patch.settled ?? existing.settled,
     };
     db.prepare(
       `UPDATE expenses SET title = ?, amount = ?, spent_on = ?, category = ?, paid_by = ?,
-         note = ?, updated_at = datetime('now') WHERE id = ?`
+         note = ?, settled = ?, updated_at = datetime('now') WHERE id = ?`
     ).run(
       next.title,
       next.amount,
@@ -89,6 +103,7 @@ export const expensesRepo = {
       next.category,
       next.paid_by,
       next.note,
+      next.settled ? 1 : 0,
       id
     );
     return this.findById(id);

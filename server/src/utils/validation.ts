@@ -248,6 +248,7 @@ export const createExpenseSchema = z.object({
   category: z.enum(EXPENSE_CATEGORIES).default("other"),
   paid_by: z.number().int().nullable().optional(),
   note: z.string().trim().max(1000).nullable().optional(),
+  settled: z.boolean().optional(),
 });
 
 export const updateExpenseSchema = z.object({
@@ -257,6 +258,7 @@ export const updateExpenseSchema = z.object({
   category: z.enum(EXPENSE_CATEGORIES).optional(),
   paid_by: z.number().int().nullable().optional(),
   note: z.string().trim().max(1000).nullable().optional(),
+  settled: z.boolean().optional(),
 });
 
 export const updateAppSettingsSchema = z.object({

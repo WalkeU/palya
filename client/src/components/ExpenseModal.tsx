@@ -46,6 +46,7 @@ export function ExpenseModal({
     expense ? (expense.paid_by != null ? String(expense.paid_by) : "") : String(currentUserId)
   );
   const [note, setNote] = useState(expense?.note ?? "");
+  const [settled, setSettled] = useState(expense?.settled ?? false);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ title?: string; amount?: string; form?: string }>({});
 
@@ -66,6 +67,7 @@ export function ExpenseModal({
       category,
       paid_by: paidBy ? Number(paidBy) : null,
       note: note.trim() || null,
+      settled,
     };
     try {
       const data = !expense
@@ -208,7 +210,7 @@ export function ExpenseModal({
             </div>
           </fieldset>
 
-          <div className="mb-5">
+          <div className="mb-3.5">
             <label htmlFor="expense-note" className={labelClass}>
               Megjegyzés <span className="font-normal normal-case tracking-normal">(opcionális)</span>
             </label>
@@ -222,6 +224,21 @@ export function ExpenseModal({
               placeholder="Hol vettétek, számlaszám, miért kellett…"
             />
           </div>
+
+          <label className="mb-5 flex cursor-pointer items-start gap-3 rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-3 transition hover:border-ink-300">
+            <input
+              type="checkbox"
+              checked={settled}
+              onChange={(e) => setSettled(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[rgb(var(--brand-500))]"
+            />
+            <span>
+              <span className="block text-sm font-medium text-ink-950">Elszámolva</span>
+              <span className="block text-xs text-ink-500">
+                A fizető már visszakapta az összeget.
+              </span>
+            </span>
+          </label>
 
           {errors.form && (
             <div role="alert" className="mb-4 rounded-lg bg-scale-1/10 px-3 py-2 text-sm text-scale-1">

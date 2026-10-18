@@ -3,6 +3,7 @@
 ## Nyitott
 
 ## Done
+- [x] 2026-10-18 - Költségeknél "Elszámolva" jelölő, hogy látszódjon, kinek mennyi jár még vissza
 - [x] 2026-09-30 - Jegyzet törlésénél (kihúzás a kukába) legyen vizuálisabb figyelmeztetés - pl. piros legyen maga a jegyzet/kártya is, amikor a kuka fölé húzzák
 - [x] 2026-09-29 - Kereső a feladatok között név alapján
 - [x] 2026-09-29 - Könnyű módja legyen a feladatok backlogba mozgatásának és onnan vissza

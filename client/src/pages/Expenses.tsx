@@ -38,13 +38,14 @@ function sum(list: Expense[]): number {
 function downloadCsv(rows: Expense[], fileLabel: string) {
   const escape = (v: string) => (/[";\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
   const lines = [
-    ["Dátum", "Megnevezés", "Kategória", "Összeg (Ft)", "Fizette", "Megjegyzés"],
+    ["Dátum", "Megnevezés", "Kategória", "Összeg (Ft)", "Fizette", "Elszámolva", "Megjegyzés"],
     ...rows.map((e) => [
       e.spent_on,
       e.title,
       EXPENSE_CATEGORY_BY_KEY[e.category].label,
       String(e.amount),
       payerName(e),
+      e.settled ? "Igen" : "Nem",
       e.note ?? "",
     ]),
   ].map((cols) => cols.map(escape).join(";"));
@@ -56,6 +57,29 @@ function downloadCsv(rows: Expense[], fileLabel: string) {
   a.download = `koltsegek-${fileLabel}.csv`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+type PersonTotal = {
+  id: PersonFilter;
+  name: string;
+  avatar: string | null;
+  amount: number;
+  /** The part of `amount` not yet settled - what this person is still owed. */
+  open: number;
+};
+
+function CheckIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M20 6L9 17l-5-5"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 }
 
 function ChevronIcon({ direction }: { direction: "left" | "right" }) {
@@ -75,6 +99,7 @@ function ChevronIcon({ direction }: { direction: "left" | "right" }) {
 function SummaryCard({
   periodLabel,
   total,
+  openTotal,
   count,
   previousTotal,
   people,
@@ -86,9 +111,10 @@ function SummaryCard({
 }: {
   periodLabel: string;
   total: number;
+  openTotal: number;
   count: number;
   previousTotal: number | null;
-  people: { id: PersonFilter; name: string; avatar: string | null; amount: number }[];
+  people: PersonTotal[];
   categories: { key: ExpenseCategory; label: string; accent: string; amount: number }[];
   personFilter: PersonFilter;
   categoryFilter: ExpenseCategory | null;
@@ -140,6 +166,24 @@ function SummaryCard({
             </>
           )}
         </p>
+        {count > 0 && (
+          <p className="mt-3 flex items-center gap-1.5 text-xs">
+            {openTotal > 0 ? (
+              <>
+                <span className="h-1.5 w-1.5 rounded-full bg-scale-2" aria-hidden="true" />
+                <span className="font-medium tabular-nums text-ink-950">{formatHuf(openTotal)}</span>
+                <span className="text-ink-500">elszámolatlan</span>
+              </>
+            ) : (
+              <>
+                <span className="text-brand-500">
+                  <CheckIcon />
+                </span>
+                <span className="text-ink-500">Minden tétel elszámolva</span>
+              </>
+            )}
+          </p>
+        )}
       </div>
 
       <div className={expanded ? "block" : "hidden lg:block"}>
@@ -176,6 +220,15 @@ function SummaryCard({
                           style={{ width: `${(p.amount / peopleMax) * 100}%` }}
                         />
                       </div>
+                      {p.open > 0 && (
+                        <p className="ml-[30px] mt-1 text-[11px] text-ink-500">
+                          ebből{" "}
+                          <span className="font-medium tabular-nums text-ink-700">
+                            {formatHuf(p.open)}
+                          </span>{" "}
+                          még jár neki
+                        </p>
+                      )}
                     </button>
                   </li>
                 );
@@ -248,6 +301,7 @@ export default function Expenses() {
   const [personFilter, setPersonFilter] = useState<PersonFilter>(null);
   const [categoryFilter, setCategoryFilter] = useState<ExpenseCategory | null>(null);
   const [search, setSearch] = useState("");
+  const [onlyOpen, setOnlyOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -311,13 +365,15 @@ export default function Expenses() {
     personFilter === null ||
     (personFilter === "unassigned" ? e.paid_by === null : e.paid_by === personFilter);
   const matchesCategory = (e: Expense) => categoryFilter === null || e.category === categoryFilter;
+  const matchesStatus = (e: Expense) => !onlyOpen || !e.settled;
 
   const inPeriod = month ? expenses.filter((e) => e.spent_on.startsWith(month)) : expenses;
 
   const filtered = inPeriod.filter(
-    (e) => matchesSearch(e) && matchesPerson(e) && matchesCategory(e)
+    (e) => matchesSearch(e) && matchesPerson(e) && matchesCategory(e) && matchesStatus(e)
   );
   const total = sum(filtered);
+  const openTotal = sum(filtered.filter((e) => !e.settled));
 
   const previousTotal = month
     ? sum(
@@ -326,7 +382,8 @@ export default function Expenses() {
             e.spent_on.startsWith(shiftMonth(month, -1)) &&
             matchesSearch(e) &&
             matchesPerson(e) &&
-            matchesCategory(e)
+            matchesCategory(e) &&
+            matchesStatus(e)
         )
       )
     : null;
@@ -334,15 +391,19 @@ export default function Expenses() {
   // Each breakdown ignores its own filter (faceted), so clicking a person
   // or category narrows the list without collapsing that breakdown to one row.
   const people = (() => {
-    const map = new Map<
-      PersonFilter,
-      { id: PersonFilter; name: string; avatar: string | null; amount: number }
-    >();
+    const map = new Map<PersonFilter, PersonTotal>();
     for (const e of inPeriod) {
-      if (!matchesSearch(e) || !matchesCategory(e)) continue;
+      if (!matchesSearch(e) || !matchesCategory(e) || !matchesStatus(e)) continue;
       const id: PersonFilter = e.paid_by ?? "unassigned";
-      const row = map.get(id) ?? { id, name: payerName(e), avatar: e.payer_avatar, amount: 0 };
+      const row = map.get(id) ?? {
+        id,
+        name: payerName(e),
+        avatar: e.payer_avatar,
+        amount: 0,
+        open: 0,
+      };
       row.amount += e.amount;
+      if (!e.settled) row.open += e.amount;
       map.set(id, row);
     }
     return [...map.values()].sort((a, b) => b.amount - a.amount);
@@ -351,7 +412,7 @@ export default function Expenses() {
   const categories = (() => {
     const totals = new Map<ExpenseCategory, number>();
     for (const e of inPeriod) {
-      if (!matchesSearch(e) || !matchesPerson(e)) continue;
+      if (!matchesSearch(e) || !matchesPerson(e) || !matchesStatus(e)) continue;
       totals.set(e.category, (totals.get(e.category) ?? 0) + e.amount);
     }
     return EXPENSE_CATEGORIES.filter((c) => totals.has(c.key))
@@ -373,12 +434,29 @@ export default function Expenses() {
     return groups;
   })();
 
-  const hasFilters = personFilter !== null || categoryFilter !== null || query !== "";
+  const hasFilters =
+    personFilter !== null || categoryFilter !== null || query !== "" || onlyOpen;
 
   function clearFilters() {
     setPersonFilter(null);
     setCategoryFilter(null);
     setSearch("");
+    setOnlyOpen(false);
+  }
+
+  // Optimistic: flipping the check is the most frequent edit, so it shouldn't
+  // wait on the round trip; rolled back if the server refuses it.
+  async function toggleSettled(target: Expense) {
+    const next = !target.settled;
+    const apply = (settled: boolean) =>
+      setExpenses((prev) => prev.map((e) => (e.id === target.id ? { ...e, settled } : e)));
+    apply(next);
+    try {
+      await api(`/api/expenses/${target.id}`, { method: "PATCH", body: { settled: next } });
+    } catch {
+      apply(!next);
+      showToast("Nem sikerült módosítani az elszámolást.", "error");
+    }
   }
 
   function handleSaved(saved: Expense, isNew: boolean) {
@@ -520,6 +598,20 @@ export default function Expenses() {
             aria-label="Keresés a költségek között"
             className="min-w-[160px] flex-1 rounded-lg border border-ink-100 bg-surface px-3 py-1.5 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 sm:max-w-xs sm:flex-none"
           />
+          <button
+            type="button"
+            onClick={() => setOnlyOpen((v) => !v)}
+            aria-pressed={onlyOpen}
+            className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition"
+            style={{
+              borderColor: onlyOpen ? "#e8935a" : "rgb(var(--ink-100))",
+              backgroundColor: onlyOpen ? "#e8935a1f" : "rgb(var(--surface))",
+              color: onlyOpen ? "#c9733a" : "rgb(var(--ink-700))",
+            }}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-scale-2" aria-hidden="true" />
+            Elszámolatlan
+          </button>
           {hasFilters && (
             <button
               type="button"
@@ -547,6 +639,7 @@ export default function Expenses() {
               <SummaryCard
                 periodLabel={periodLabel}
                 total={total}
+                openTotal={openTotal}
                 count={filtered.length}
                 previousTotal={previousTotal}
                 people={people}
@@ -600,11 +693,11 @@ export default function Expenses() {
                         {day.items.map((e) => {
                           const cat = EXPENSE_CATEGORY_BY_KEY[e.category];
                           return (
-                            <li key={e.id}>
+                            <li key={e.id} className="flex items-center transition hover:bg-ink-50">
                               <button
                                 type="button"
                                 onClick={() => setEditing(e)}
-                                className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-ink-50 focus-visible:bg-ink-50 focus-visible:outline-none"
+                                className="flex min-w-0 flex-1 items-center gap-3 py-3 pl-4 pr-2 text-left focus-visible:bg-ink-50 focus-visible:outline-none"
                               >
                                 <span
                                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
@@ -628,8 +721,35 @@ export default function Expenses() {
                                 <span title={`Fizette: ${payerName(e)}`} className="shrink-0">
                                   <Avatar avatar={e.payer_avatar} name={payerName(e)} size={24} />
                                 </span>
-                                <span className="w-24 shrink-0 text-right text-sm font-semibold tabular-nums text-ink-950 sm:w-28">
+                                <span
+                                  className={`w-24 shrink-0 text-right text-sm font-semibold tabular-nums sm:w-28 ${
+                                    e.settled ? "text-ink-500" : "text-ink-950"
+                                  }`}
+                                >
                                   {formatHuf(e.amount)}
+                                </span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => toggleSettled(e)}
+                                aria-pressed={e.settled}
+                                aria-label={`${e.title}: elszámolva`}
+                                title={e.settled ? "Elszámolva (kattints a visszavonáshoz)" : "Jelöld elszámoltnak"}
+                                className="mr-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition hover:bg-ink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100"
+                              >
+                                <span
+                                  className="flex h-5 w-5 items-center justify-center rounded-full border transition"
+                                  style={
+                                    e.settled
+                                      ? {
+                                          borderColor: "rgb(var(--brand-500))",
+                                          backgroundColor: "rgb(var(--brand-500))",
+                                          color: "white",
+                                        }
+                                      : { borderColor: "rgb(var(--ink-300))", color: "transparent" }
+                                  }
+                                >
+                                  <CheckIcon />
                                 </span>
                               </button>
                             </li>
