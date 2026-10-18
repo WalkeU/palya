@@ -146,6 +146,49 @@ export interface Link {
   updated_at: string;
 }
 
+export type ExpenseCategory =
+  | "software"
+  | "equipment"
+  | "marketing"
+  | "travel"
+  | "office"
+  | "other";
+
+export interface Expense {
+  id: number;
+  title: string;
+  /** Whole forints. */
+  amount: number;
+  /** Local calendar date, YYYY-MM-DD. */
+  spent_on: string;
+  category: ExpenseCategory;
+  paid_by: number | null;
+  payer_nickname: string | null;
+  payer_email: string | null;
+  payer_avatar: string | null;
+  note: string | null;
+  created_by: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Keep keys in sync with EXPENSE_CATEGORIES in server/src/utils/validation.ts.
+// Accents reuse the existing TAG_COLORS hues (plus a neutral gray, darker than
+// backlog's so the selected "Egyéb" chip still reads as active) so the page
+// doesn't introduce a new palette.
+export const EXPENSE_CATEGORIES: { key: ExpenseCategory; label: string; accent: string }[] = [
+  { key: "software", label: "Szoftver", accent: "#4d7ea8" },
+  { key: "equipment", label: "Eszköz", accent: "#7c6bb0" },
+  { key: "marketing", label: "Marketing", accent: "#c15b8c" },
+  { key: "travel", label: "Utazás", accent: "#d99a3d" },
+  { key: "office", label: "Iroda", accent: "#3a8a74" },
+  { key: "other", label: "Egyéb", accent: "#7d8490" },
+];
+
+export const EXPENSE_CATEGORY_BY_KEY = Object.fromEntries(
+  EXPENSE_CATEGORIES.map((c) => [c.key, c])
+) as Record<ExpenseCategory, (typeof EXPENSE_CATEGORIES)[number]>;
+
 export type CustomerPrimaryField = "name" | "business";
 
 export interface AppSettings {

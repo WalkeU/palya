@@ -1,11 +1,12 @@
 # Pálya
 
-Önhosztolt, magyar nyelvű csapat-alkalmazás: ügyfélkövető Kanban tábla, csapat feladatkövető Kanban tábla, és egy kezdőlap közös jegyzetekkel, szavazásokkal és linkekkel.
+Önhosztolt, magyar nyelvű csapat-alkalmazás: ügyfélkövető Kanban tábla, csapat feladatkövető Kanban tábla, egy kezdőlap közös jegyzetekkel, szavazásokkal és linkekkel, valamint egy költségnapló.
 
 ## Funkciók
 
 - **Ügyfelek** (`/ugyfelek`): Kanban tábla a **Potenciál → Egyeztetés → Kiépítés alatt → Kész** fázisokon át, priorizálás/motiváció skálával, kommentekkel. Egy ügyfél "Kész" / "Nem érdekli" / "Meghiúsult" jelöléssel zárható le (nem törlődik, bármikor visszaállítható a Lezárva listáról, ami ok szerint is szűrhető). Beállításban választható, hogy a név vagy az üzlet neve jelenjen meg elöl.
 - **Feladatok** (`/feladatok`): csapat Kanban tábla (Todo → Work in Progress → Blocked → Waiting for review → Done), külön Backlog és Lezárva nézettel. Címkék, felelős-hozzárendelés, kiemelés (piros háttér), kommentek, keresés cím alapján, szűrés felelős vagy "nincs hozzárendelve" szerint. Egy feladathoz alfeladatok adhatók ("+ Alfeladat") - ezek maguk is teljes, húzható task-kártyák a táblán, a szülőjük címkéjével jelölve és egy kicsit eltérő panel-stílussal, de nem lehet beléjük újabb alfeladatot rakni. A Done fázisban egy beállítható ideig (alapból 30 nap) veszteglő feladat automatikusan átkerül a Lezárva közé, onnan visszahozható.
+- **Költségek** (`/koltsegek`): ki, mit, mennyiért és mikor vett. Havi nézet lapozóval (vagy minden időszak), naponként csoportosított lista, összesítő az előző hónaphoz mért változással, "Ki fizette" és kategória szerinti bontással (kattintva szűr). Szűrés személyre és szövegre, a szűrt lista CSV-be exportálható (Excelben megnyitható). Az `N` billentyű új tételt nyit.
 - **Kezdőlap** (`/`): csapat közös jegyzetei (szabadon húzhatók/átrendezhetők, a kukára húzva törölhetők - húzás közben pirosra vált a jegyzet jelezve a törlést -, szavazásként is használhatók - egyszeres vagy többszörös választással, opciók utólag is szerkeszthetők), és testreszabható linkek listája.
 - **Beállítások**: profil (avatar, becenév, sötét/világos mód, verziószám + changelog megtekintő), jelszóváltás, címkék kezelése, linkek szerkesztése, ügyfél-mező sorrend, feladatok automatikus lezárásának időtartama, felhasználókezelés (superadmin). Mentetlen módosítással próbált bezárásnál figyelmeztet.
 

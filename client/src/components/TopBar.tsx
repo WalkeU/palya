@@ -65,6 +65,11 @@ export function TopBar({ onNewCustomer }: { onNewCustomer?: () => void }) {
                 label="Feladatok"
                 active={location.pathname === "/feladatok"}
               />
+              <NavLink
+                to="/koltsegek"
+                label="Költségek"
+                active={location.pathname === "/koltsegek"}
+              />
             </nav>
           </div>
 
@@ -106,6 +111,12 @@ export function TopBar({ onNewCustomer }: { onNewCustomer?: () => void }) {
             to="/feladatok"
             label="Feladatok"
             active={location.pathname === "/feladatok"}
+            compact
+          />
+          <NavLink
+            to="/koltsegek"
+            label="Költségek"
+            active={location.pathname === "/koltsegek"}
             compact
           />
           {isCustomers && onNewCustomer && (

@@ -1,6 +1,7 @@
 # Changelog
 
 [Unreleased]
+- 2026-10-18 - Added a Költségek (expenses) page: log who bought what, for how much and when, with monthly totals, per-person and per-category breakdowns, filters and CSV export
 - 2026-10-03 release v1.2.1
 - 2026-10-03 - Gave subtasks their own centralized accent color (plum) instead of reusing the interactive brand teal, and showed the parent task's title in the subtask panel header
 - 2026-10-03 - Fixed a broken (white) subtask panel border and blocked nesting subtasks inside subtasks
