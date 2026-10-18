@@ -11,7 +11,7 @@ import { TagChip } from "./TagChip";
 import { PasswordInput } from "./PasswordInput";
 import { UsersManagement } from "./UsersManagement";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { IconPicker, LinkIcon } from "./icons";
+import { IconPicker, LinkIcon, SettingsIcon, type SettingsIconName } from "./icons";
 import { useEscapeToClose } from "../hooks/useEscapeToClose";
 
 const AVATAR_SIZE = 160;
@@ -988,15 +988,17 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
 
   useEscapeToClose(requestClose);
 
-  const tabs: { key: Tab; label: string }[] = [
-    { key: "profil", label: "Profil" },
-    { key: "jelszo", label: "Jelszó" },
-    { key: "cimkek", label: "Címkék" },
-    { key: "linkek", label: "Linkek" },
-    { key: "ugyfelek", label: "Ügyfelek" },
-    { key: "feladatok", label: "Feladatok" },
-    { key: "koltsegek", label: "Költségek" },
-    ...(isSuperAdmin ? [{ key: "felhasznalok" as Tab, label: "Felhasználók" }] : []),
+  const tabs: { key: Tab; label: string; icon: SettingsIconName }[] = [
+    { key: "profil", label: "Profil", icon: "user" },
+    { key: "jelszo", label: "Jelszó", icon: "lock" },
+    { key: "cimkek", label: "Címkék", icon: "tag" },
+    { key: "linkek", label: "Linkek", icon: "link-2" },
+    { key: "ugyfelek", label: "Ügyfelek", icon: "briefcase" },
+    { key: "feladatok", label: "Feladatok", icon: "check-square" },
+    { key: "koltsegek", label: "Költségek", icon: "credit-card" },
+    ...(isSuperAdmin
+      ? [{ key: "felhasznalok" as Tab, label: "Felhasználók", icon: "users" as const }]
+      : []),
   ];
 
   return (
@@ -1006,7 +1008,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
         onClick={requestClose}
       />
       <div className="fixed inset-0 z-50 flex items-center justify-center px-3 py-6 sm:px-6">
-        <div className="flex h-full w-full max-w-2xl animate-rise-in flex-col overflow-hidden rounded-2xl border border-ink-100 bg-ink-50 shadow-panel">
+        <div className="flex h-full w-full max-w-3xl animate-rise-in flex-col overflow-hidden rounded-2xl border border-ink-100 bg-ink-50 shadow-panel">
           <div className="flex items-center justify-between border-b border-ink-100 bg-surface px-5 py-4">
             <h1 className="font-display text-xl font-medium text-ink-950">Beállítások</h1>
             <button
@@ -1025,46 +1027,61 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
             </button>
           </div>
 
-          <div className="border-b border-ink-100 bg-surface px-5">
-            <div className="flex gap-1 overflow-x-auto">
-              {tabs.map((t) => (
-                <button
-                  key={t.key}
-                  onClick={() => setTab(t.key)}
-                  className="whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition"
-                  style={{
-                    borderColor: tab === t.key ? "#3a8a74" : "transparent",
-                    color: tab === t.key ? "rgb(var(--ink-950))" : "rgb(var(--ink-500))",
-                  }}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <div className="flex min-h-0 flex-1">
+            {/* Icon-only rail on phones, icon + label list from sm up. */}
+            <nav
+              aria-label="Beállítások"
+              className="flex w-14 shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-ink-100 bg-surface p-2 sm:w-48"
+            >
+              {tabs.map((t) => {
+                const active = tab === t.key;
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => setTab(t.key)}
+                    aria-current={active ? "page" : undefined}
+                    title={t.label}
+                    className="flex items-center justify-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition hover:bg-ink-50 sm:justify-start"
+                    style={{
+                      backgroundColor: active ? "rgb(var(--brand-100))" : undefined,
+                      color: active ? "rgb(var(--ink-950))" : "rgb(var(--ink-500))",
+                    }}
+                  >
+                    <SettingsIcon
+                      name={t.icon}
+                      size={17}
+                      className={active ? "shrink-0 text-brand-600" : "shrink-0"}
+                    />
+                    <span className="hidden truncate sm:inline">{t.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
 
-          <div className="flex-1 overflow-y-auto px-5 py-6">
-            {tab === "profil" && (
-              <ProfileTab onDirtyChange={(d) => setTabDirty("profil", d)} />
-            )}
-            {tab === "jelszo" && (
-              <PasswordTab onDirtyChange={(d) => setTabDirty("jelszo", d)} />
-            )}
-            {tab === "cimkek" && <TagsTab onDirtyChange={(d) => setTabDirty("cimkek", d)} />}
-            {tab === "linkek" && <LinksTab onDirtyChange={(d) => setTabDirty("linkek", d)} />}
-            {tab === "ugyfelek" && <CustomersSettingsTab />}
-            {tab === "feladatok" && (
-              <TasksSettingsTab onDirtyChange={(d) => setTabDirty("feladatok", d)} />
-            )}
-            {tab === "koltsegek" && <ExpensesSettingsTab />}
-            {tab === "felhasznalok" && isSuperAdmin && (
-              <div>
-                <h2 className="mb-4 font-display text-lg font-medium text-ink-950">
-                  Felhasználók
-                </h2>
-                <UsersManagement />
-              </div>
-            )}
+            <div className="min-w-0 flex-1 overflow-y-auto px-5 py-6">
+              {tab === "profil" && (
+                <ProfileTab onDirtyChange={(d) => setTabDirty("profil", d)} />
+              )}
+              {tab === "jelszo" && (
+                <PasswordTab onDirtyChange={(d) => setTabDirty("jelszo", d)} />
+              )}
+              {tab === "cimkek" && <TagsTab onDirtyChange={(d) => setTabDirty("cimkek", d)} />}
+              {tab === "linkek" && <LinksTab onDirtyChange={(d) => setTabDirty("linkek", d)} />}
+              {tab === "ugyfelek" && <CustomersSettingsTab />}
+              {tab === "feladatok" && (
+                <TasksSettingsTab onDirtyChange={(d) => setTabDirty("feladatok", d)} />
+              )}
+              {tab === "koltsegek" && <ExpensesSettingsTab />}
+              {tab === "felhasznalok" && isSuperAdmin && (
+                <div>
+                  <h2 className="mb-4 font-display text-lg font-medium text-ink-950">
+                    Felhasználók
+                  </h2>
+                  <UsersManagement />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

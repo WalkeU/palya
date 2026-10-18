@@ -1,6 +1,7 @@
 # Changelog
 
 [Unreleased]
+- 2026-10-18 - Moved the settings tabs into a left-side vertical menu with icons (Feather, bundled locally)
 - 2026-10-18 release v1.2.3
 - 2026-10-18 - Added optional expense splitting (Költségmegosztás): per-expense participants, payer share deducted automatically, a who-owes-whom card and a one-click settle-up
 - 2026-10-18 release v1.2.2
