@@ -20,9 +20,11 @@ import {
 } from "../utils/format";
 import { balancesOf, transfersOf } from "../utils/split";
 
-// `?honap=2026-10` or `?honap=osszes` - kept in the URL so a filtered view
-// can be bookmarked/shared and survives a reload.
+// `?honap=2026-10`, `?honap=osszes` or `?honap=rendezetlen` (every unsettled
+// expense, any period) - kept in the URL so a filtered view can be
+// bookmarked/shared and survives a reload.
 const ALL_PERIODS = "osszes";
+const OPEN_PERIOD = "rendezetlen";
 const MONTH_PARAM = /^\d{4}-\d{2}$/;
 
 function payerName(e: Pick<Expense, "payer_nickname" | "payer_email">): string {
@@ -415,13 +417,18 @@ export default function Expenses() {
   const [confirmingSettleAll, setConfirmingSettleAll] = useState(false);
 
   const monthParam = searchParams.get("honap");
+  const openMode = monthParam === OPEN_PERIOD;
   const month: string | null =
-    monthParam === ALL_PERIODS
+    monthParam === ALL_PERIODS || openMode
       ? null
       : monthParam && MONTH_PARAM.test(monthParam)
         ? monthParam
         : currentMonthKey();
-  const periodLabel = month ? formatMonthLabel(month) : "Minden időszak";
+  const periodLabel = month
+    ? formatMonthLabel(month)
+    : openMode
+      ? "Összes rendezetlen"
+      : "Minden időszak";
 
   function setMonth(next: string | null) {
     setSearchParams(
@@ -476,7 +483,7 @@ export default function Expenses() {
     personFilter === null ||
     (personFilter === "unassigned" ? e.paid_by === null : e.paid_by === personFilter);
   const matchesCategory = (e: Expense) => categoryFilter === null || e.category === categoryFilter;
-  const matchesStatus = (e: Expense) => !onlyOpen || !e.settled;
+  const matchesStatus = (e: Expense) => !(onlyOpen || openMode) || !e.settled;
 
   const inPeriod = month ? expenses.filter((e) => e.spent_on.startsWith(month)) : expenses;
 
@@ -620,14 +627,15 @@ export default function Expenses() {
               className="flex rounded-lg bg-ink-100 p-0.5 text-xs font-medium"
             >
               {[
-                { key: "month", label: "Havi", active: month !== null },
-                { key: "all", label: "Összes", active: month === null },
+                { key: "month", label: "Havi", active: month !== null, next: currentMonthKey() },
+                { key: "all", label: "Összes", active: month === null && !openMode, next: null },
+                { key: "open", label: "Rendezetlen", active: openMode, next: OPEN_PERIOD },
               ].map((o) => (
                 <button
                   key={o.key}
                   type="button"
                   aria-pressed={o.active}
-                  onClick={() => setMonth(o.key === "all" ? null : currentMonthKey())}
+                  onClick={() => setMonth(o.next)}
                   className="rounded-md px-3 py-1.5 transition"
                   style={{
                     backgroundColor: o.active ? "rgb(var(--surface))" : "transparent",
@@ -680,7 +688,9 @@ export default function Expenses() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => downloadCsv(filtered, month ?? "osszes")}
+              onClick={() =>
+                downloadCsv(filtered, month ?? (openMode ? OPEN_PERIOD : ALL_PERIODS))
+              }
               disabled={filtered.length === 0}
               title="A szűrt lista letöltése CSV-ként (Excelben megnyitható)"
               className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-ink-700 transition hover:bg-ink-100 hover:text-ink-950 disabled:pointer-events-none disabled:opacity-40"
@@ -725,20 +735,23 @@ export default function Expenses() {
             aria-label="Keresés a költségek között"
             className="min-w-[160px] flex-1 rounded-lg border border-ink-100 bg-surface px-3 py-1.5 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 sm:max-w-xs sm:flex-none"
           />
-          <button
-            type="button"
-            onClick={() => setOnlyOpen((v) => !v)}
-            aria-pressed={onlyOpen}
-            className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition"
-            style={{
-              borderColor: onlyOpen ? "#e8935a" : "rgb(var(--ink-100))",
-              backgroundColor: onlyOpen ? "#e8935a1f" : "rgb(var(--surface))",
-              color: onlyOpen ? "#c9733a" : "rgb(var(--ink-700))",
-            }}
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-scale-2" aria-hidden="true" />
-            Elszámolatlan
-          </button>
+          {/* Redundant in "Rendezetlen" mode, which already shows only these. */}
+          {!openMode && (
+            <button
+              type="button"
+              onClick={() => setOnlyOpen((v) => !v)}
+              aria-pressed={onlyOpen}
+              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition"
+              style={{
+                borderColor: onlyOpen ? "#e8935a" : "rgb(var(--ink-100))",
+                backgroundColor: onlyOpen ? "#e8935a1f" : "rgb(var(--surface))",
+                color: onlyOpen ? "#c9733a" : "rgb(var(--ink-700))",
+              }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-scale-2" aria-hidden="true" />
+              Elszámolatlan
+            </button>
+          )}
           {hasFilters && (
             <button
               type="button"
@@ -791,7 +804,9 @@ export default function Expenses() {
                   <p className="text-sm text-ink-500">
                     {hasFilters
                       ? "Nincs a szűrésnek megfelelő tétel."
-                      : month
+                      : openMode
+                        ? "Nincs rendezetlen tétel, minden el van számolva."
+                        : month
                         ? "Ebben a hónapban még nincs rögzített költség."
                         : "Még nincs rögzített költség."}
                   </p>
