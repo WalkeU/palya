@@ -1,6 +1,7 @@
 # Changelog
 
 [Unreleased]
+- 2026-10-18 release v1.2.5
 - 2026-10-18 - Added a Rendezetlen view next to Havi/Összes on the expenses page, listing every unsettled expense across all periods
 - 2026-10-18 release v1.2.4
 - 2026-10-18 - Fixed trust proxy accepting spoofed X-Forwarded-For (rate-limit bypass, ERR_ERL_PERMISSIVE_TRUST_PROXY): now only private-network proxies are trusted, overridable via TRUST_PROXY
