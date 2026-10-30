@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { appSettingsRepo } from "../repositories/appSettings";
 import { updateAppSettingsSchema } from "../utils/validation";
+import { stagesRepo } from "../repositories/stages";
 import { requireAuth } from "../middleware/auth";
 
 export const settingsRouter = Router();
@@ -15,6 +16,8 @@ function readSettings() {
       (appSettingsRepo.get("customerPrimaryField") as "name" | "business" | undefined) ||
       "name",
     expenseSplitEnabled: appSettingsRepo.getBool("expenseSplitEnabled", false),
+    customerStages: stagesRepo.customerStages(),
+    taskStages: stagesRepo.taskStages(),
   };
 }
 
@@ -38,6 +41,12 @@ settingsRouter.patch("/", (req, res) => {
   }
   if (parsed.data.expenseSplitEnabled !== undefined) {
     appSettingsRepo.setBool("expenseSplitEnabled", parsed.data.expenseSplitEnabled);
+  }
+  if (parsed.data.customerStages !== undefined) {
+    stagesRepo.setCustomerStages(parsed.data.customerStages);
+  }
+  if (parsed.data.taskStages !== undefined) {
+    stagesRepo.setTaskStages(parsed.data.taskStages);
   }
   res.json(readSettings());
 });

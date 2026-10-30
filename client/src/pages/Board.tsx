@@ -15,7 +15,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import type { AppSettings, ClosedReason, Customer, Stage } from "../types";
-import { CLOSED_REASONS, STAGES } from "../types";
+import { CLOSED_REASONS } from "../types";
+import { useStages } from "../utils/stages";
 import { api } from "../api/client";
 import { TopBar } from "../components/TopBar";
 import { KanbanColumn } from "../components/KanbanColumn";
@@ -23,11 +24,11 @@ import { CustomerCard } from "../components/CustomerCard";
 import { CustomerDetailPanel } from "../components/CustomerDetailPanel";
 import { NewCustomerModal } from "../components/NewCustomerModal";
 
-const STAGE_KEYS = new Set(STAGES.map((s) => s.key));
-
 type Tab = "board" | "closed";
 
 export default function Board() {
+  const { customerStages: STAGES } = useStages();
+  const STAGE_KEYS = useMemo(() => new Set(STAGES.map((s) => s.key)), [STAGES]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("board");
@@ -76,7 +77,7 @@ export default function Board() {
           .filter((c) => c.stage === s.key)
           .sort((a, b) => a.position - b.position),
       })),
-    [activeCustomers]
+    [activeCustomers, STAGES]
   );
 
   const activeCustomer = customers.find((c) => c.id === activeId) || null;
@@ -255,7 +256,7 @@ export default function Board() {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
           >
-            <div className="flex snap-x snap-mandatory gap-4 sm:gap-5">
+            <div className="flex snap-x snap-mandatory gap-4 sm:snap-none sm:gap-5">
               {columns.map((col) => (
                 <KanbanColumn
                   key={col.key}

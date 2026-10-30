@@ -20,7 +20,9 @@ export const createUserSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
 });
 
-const stageEnum = z.enum(["potential", "discussion", "building", "done"]);
+// Stages are user-editable (Beállítások), so the allowed set is checked
+// against the saved list in the routes, not baked into the schema.
+const stageEnum = z.string().min(1).max(40);
 const scaleValue = z.number().int().min(1).max(5).nullable().optional();
 const closedReasonEnum = z
   .enum(["not_interested", "failed", "completed"])
@@ -70,15 +72,7 @@ export const createCommentSchema = z.object({
   text: z.string().trim().min(1, "A komment nem lehet üres").max(3000),
 });
 
-const taskStageEnum = z.enum([
-  "backlog",
-  "todo",
-  "in_progress",
-  "blocked",
-  "waiting_review",
-  "done",
-  "closed",
-]);
+const taskStageEnum = z.string().min(1).max(40);
 
 const tagIdsField = z.array(z.number().int()).optional();
 
@@ -267,11 +261,37 @@ export const settleExpensesSchema = z.object({
   ids: z.array(z.number().int()).min(1).max(5000),
 });
 
+function stageListSchema(min: number) {
+  return z
+    .array(
+      z.object({
+        key: z.string().min(1).max(40).optional(),
+        label: z.string().trim().min(1).max(30),
+        accent: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+      })
+    )
+    .min(min)
+    .max(12)
+    .refine(
+      (l) => {
+        const keys = l.map((s) => s.key).filter(Boolean);
+        return new Set(keys).size === keys.length;
+      },
+      { message: "Duplikált állapot kulcs" }
+    );
+}
+
 export const updateAppSettingsSchema = z.object({
   linksEnabled: z.boolean().optional(),
   autoCloseDays: z.number().int().min(1).max(365).optional(),
   customerPrimaryField: z.enum(["name", "business"]).optional(),
   expenseSplitEnabled: z.boolean().optional(),
+  customerStages: stageListSchema(1).optional(),
+  taskStages: stageListSchema(1)
+    .refine((l) => l.some((s) => s.key === "done"), {
+      message: "A Done állapot nem törölhető",
+    })
+    .optional(),
 });
 
 export const changeOwnPasswordSchema = z

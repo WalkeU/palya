@@ -1,7 +1,8 @@
 import { FormEvent, useState } from "react";
 import type { Customer, Stage } from "../types";
-import { STAGES } from "../types";
+import { useStages } from "../utils/stages";
 import { api } from "../api/client";
+import { StagePicker } from "./StagePicker";
 import { useEscapeToClose } from "../hooks/useEscapeToClose";
 
 export function NewCustomerModal({
@@ -17,7 +18,10 @@ export function NewCustomerModal({
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [note, setNote] = useState("");
-  const [stage, setStage] = useState<Stage>("potential");
+  const { customerStages: STAGES } = useStages();
+  const [pickedStage, setStage] = useState<Stage | null>(null);
+  // Until one is picked, new customers land in the first column.
+  const stage: Stage = pickedStage ?? STAGES[0]?.key ?? "potential";
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -131,28 +135,12 @@ export function NewCustomerModal({
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
               Fázis
             </label>
-            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-              {STAGES.map((s) => (
-                <button
-                  key={s.key}
-                  type="button"
-                  onClick={() => setStage(s.key)}
-                  className="flex flex-col items-center justify-center gap-1 rounded-lg border px-1.5 py-2.5 text-center text-[11px] font-medium leading-tight transition"
-                  style={{
-                    borderColor: stage === s.key ? s.accent : "rgb(var(--ink-100))",
-                    backgroundColor:
-                      stage === s.key ? `${s.accent}1a` : "rgb(var(--ink-50))",
-                    color: stage === s.key ? s.accent : "rgb(var(--ink-700))",
-                  }}
-                >
-                  <span
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ backgroundColor: s.accent }}
-                  />
-                  {s.label}
-                </button>
-              ))}
-            </div>
+            <StagePicker
+              stages={STAGES}
+              value={stage}
+              onChange={setStage}
+              idleBackground="ink-50"
+            />
           </div>
 
           {error && (

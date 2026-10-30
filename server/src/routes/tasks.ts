@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { tasksRepo } from "../repositories/tasks";
+import { stagesRepo } from "../repositories/stages";
 import { taskCommentsRepo } from "../repositories/taskComments";
 import {
   createTaskSchema,
@@ -24,6 +25,9 @@ tasksRouter.post("/", (req, res) => {
       .status(400)
       .json({ error: "invalid_input", details: parsed.error.flatten() });
   }
+  if (!stagesRepo.isTaskStage(parsed.data.stage)) {
+    return res.status(400).json({ error: "invalid_stage" });
+  }
   if (parsed.data.parent_task_id) {
     const parent = tasksRepo.findById(parsed.data.parent_task_id);
     if (!parent) return res.status(400).json({ error: "parent_not_found" });
@@ -41,6 +45,9 @@ tasksRouter.patch("/reorder", (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: "invalid_input" });
   }
+  if (!stagesRepo.isTaskStage(parsed.data.stage)) {
+    return res.status(400).json({ error: "invalid_stage" });
+  }
   tasksRepo.reorder(parsed.data.stage, parsed.data.orderedIds);
   res.json({ tasks: tasksRepo.list() });
 });
@@ -53,6 +60,9 @@ tasksRouter.patch("/:id", (req, res) => {
     return res
       .status(400)
       .json({ error: "invalid_input", details: parsed.error.flatten() });
+  }
+  if (parsed.data.stage !== undefined && !stagesRepo.isTaskStage(parsed.data.stage)) {
+    return res.status(400).json({ error: "invalid_stage" });
   }
   const task = tasksRepo.update(id, parsed.data);
   if (!task) return res.status(404).json({ error: "not_found" });

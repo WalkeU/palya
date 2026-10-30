@@ -11,7 +11,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Tag, Task, TaskStage, TeamMember } from "../types";
-import { TASK_STAGES } from "../types";
+import { useStages } from "../utils/stages";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { TopBar } from "../components/TopBar";
@@ -21,8 +21,6 @@ import { TaskDetailPanel } from "../components/TaskDetailPanel";
 import { NewTaskModal } from "../components/NewTaskModal";
 import { PeopleFilterBar, type PersonFilter } from "../components/PeopleFilterBar";
 import { TagFilterBar } from "../components/TagFilterBar";
-
-const BOARD_STAGE_KEYS = new Set(TASK_STAGES.map((s) => s.key));
 
 type Tab = "board" | "backlog" | "closed";
 
@@ -76,6 +74,8 @@ function SimpleTaskList({
 
 export default function Tasks() {
   const { user } = useAuth();
+  const { taskStages: TASK_STAGES } = useStages();
+  const BOARD_STAGE_KEYS = useMemo(() => new Set(TASK_STAGES.map((s) => s.key)), [TASK_STAGES]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -198,7 +198,7 @@ export default function Tasks() {
           .filter((t) => t.stage === s.key)
           .sort((a, b) => a.position - b.position),
       })),
-    [visibleTasks]
+    [visibleTasks, TASK_STAGES]
   );
 
   const backlogTasks = useMemo(
@@ -294,7 +294,7 @@ export default function Tasks() {
   }
 
   const newTaskDefaults: Record<Tab, { stage: TaskStage; allowPicker: boolean }> = {
-    board: { stage: "todo", allowPicker: true },
+    board: { stage: TASK_STAGES[0].key, allowPicker: true },
     backlog: { stage: "backlog", allowPicker: false },
     closed: { stage: "backlog", allowPicker: false },
   };
@@ -376,7 +376,7 @@ export default function Tasks() {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
           >
-            <div className="flex snap-x snap-mandatory gap-4 sm:gap-5">
+            <div className="flex snap-x snap-mandatory gap-4 sm:snap-none sm:gap-5">
               {columns.map((col) => (
                 <TaskColumn
                   key={col.key}

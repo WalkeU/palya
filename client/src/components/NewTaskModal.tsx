@@ -1,7 +1,8 @@
 import { FormEvent, useEffect, useState } from "react";
 import type { Tag, Task, TaskStage, TeamMember } from "../types";
-import { TASK_STAGES } from "../types";
+import { useStages } from "../utils/stages";
 import { api } from "../api/client";
+import { StagePicker } from "./StagePicker";
 import { TagChip } from "./TagChip";
 import { AssigneePicker } from "./AssigneePicker";
 import { useEscapeToClose } from "../hooks/useEscapeToClose";
@@ -27,7 +28,16 @@ export function NewTaskModal({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [assigneeId, setAssigneeId] = useState<string>("");
-  const [stage, setStage] = useState<TaskStage>(defaultStage);
+  const { taskStages: TASK_STAGES } = useStages();
+  const [pickedStage, setStage] = useState<TaskStage>(defaultStage);
+  // The default may predate a stage-list edit (or the store's first load);
+  // never submit a board column that no longer exists.
+  const stage: TaskStage =
+    pickedStage === "backlog" ||
+    pickedStage === "closed" ||
+    TASK_STAGES.some((s) => s.key === pickedStage)
+      ? pickedStage
+      : (TASK_STAGES[0]?.key ?? pickedStage);
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -147,28 +157,12 @@ export function NewTaskModal({
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
                 Fázis
               </label>
-              <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
-                {TASK_STAGES.map((s) => (
-                  <button
-                    key={s.key}
-                    type="button"
-                    onClick={() => setStage(s.key)}
-                    className="flex flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2.5 text-center text-[10px] font-medium leading-tight transition"
-                    style={{
-                      borderColor: stage === s.key ? s.accent : "rgb(var(--ink-100))",
-                      backgroundColor:
-                        stage === s.key ? `${s.accent}1a` : "rgb(var(--ink-50))",
-                      color: stage === s.key ? s.accent : "rgb(var(--ink-700))",
-                    }}
-                  >
-                    <span
-                      className="h-1.5 w-1.5 rounded-full"
-                      style={{ backgroundColor: s.accent }}
-                    />
-                    {s.label}
-                  </button>
-                ))}
-              </div>
+              <StagePicker
+                stages={TASK_STAGES}
+                value={stage}
+                onChange={setStage}
+                idleBackground="ink-50"
+              />
             </div>
           )}
 

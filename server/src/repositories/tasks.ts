@@ -1,14 +1,9 @@
 import { db } from "../db";
 import { tagsRepo, type Tag } from "./tags";
 
-export type TaskStage =
-  | "backlog"
-  | "todo"
-  | "in_progress"
-  | "blocked"
-  | "waiting_review"
-  | "done"
-  | "closed";
+// Board stages are user-editable; "backlog" and "closed" are fixed, "done" is
+// the one the auto-close sweep acts on.
+export type TaskStage = string;
 
 export interface Task {
   id: number;
@@ -116,8 +111,9 @@ export const tasksRepo = {
     }
     const info = db
       .prepare(
-        `INSERT INTO tasks (title, description, stage, assignee_id, position, created_by, parent_task_id)
-         VALUES (@title, @description, @stage, @assigneeId, @position, @createdBy, @parentTaskId)`
+        `INSERT INTO tasks (title, description, stage, assignee_id, position, created_by, parent_task_id, done_at)
+         VALUES (@title, @description, @stage, @assigneeId, @position, @createdBy, @parentTaskId,
+                 CASE WHEN @stage = 'done' THEN datetime('now') END)`
       )
       .run({
         title: input.title,
@@ -226,7 +222,9 @@ export const tasksRepo = {
   autoCloseStale(days: number): number {
     const rows = db
       .prepare(
-        "SELECT id FROM tasks WHERE stage = 'done' AND done_at IS NOT NULL AND done_at <= datetime('now', ?)"
+        // COALESCE: a task created straight into "done" (or otherwise left
+        // without a done_at) would never be swept; fall back to updated_at.
+        "SELECT id FROM tasks WHERE stage = 'done' AND COALESCE(done_at, updated_at) <= datetime('now', ?)"
       )
       .all(`-${days} days`) as { id: number }[];
     if (rows.length === 0) return 0;

@@ -1,4 +1,11 @@
-export type Stage = "potential" | "discussion" | "building" | "done";
+// Stages are user-editable in Beállítások; the keys below are the "Default" set.
+export type Stage = string;
+
+export interface StageDef {
+  key: string;
+  label: string;
+  accent: string;
+}
 export type ClosedReason = "not_interested" | "failed" | "completed";
 
 export interface User {
@@ -48,7 +55,7 @@ export interface TaskComment {
   created_at: string;
 }
 
-export const STAGES: { key: Stage; label: string; accent: string }[] = [
+export const DEFAULT_CUSTOMER_STAGES: StageDef[] = [
   { key: "potential", label: "Potenciál", accent: "#d99a3d" },
   { key: "discussion", label: "Egyeztetés", accent: "#4d7ea8" },
   { key: "building", label: "Kiépítés alatt", accent: "#7c6bb0" },
@@ -61,14 +68,8 @@ export const CLOSED_REASONS: { key: ClosedReason; label: string; accent: string 
   { key: "failed", label: "Meghiúsult", accent: "#c85a4a" },
 ];
 
-export type TaskStage =
-  | "backlog"
-  | "todo"
-  | "in_progress"
-  | "blocked"
-  | "waiting_review"
-  | "done"
-  | "closed";
+// "backlog" and "closed" are fixed; every other key is a board column.
+export type TaskStage = string;
 
 export interface Tag {
   id: number;
@@ -201,6 +202,8 @@ export interface AppSettings {
   customerPrimaryField: CustomerPrimaryField;
   /** "Költségmegosztás": split unsettled expenses and show who owes whom. */
   expenseSplitEnabled: boolean;
+  customerStages: StageDef[];
+  taskStages: StageDef[];
 }
 
 export interface TeamMember {
@@ -210,21 +213,10 @@ export interface TeamMember {
   avatar: string | null;
 }
 
-export const TASK_STAGES: { key: TaskStage; label: string; accent: string }[] = [
+export const DEFAULT_TASK_STAGES: StageDef[] = [
   { key: "todo", label: "Todo", accent: "#6b7cae" },
   { key: "in_progress", label: "Work in Progress", accent: "#d99a3d" },
   { key: "blocked", label: "Blocked", accent: "#c85a4a" },
   { key: "waiting_review", label: "Waiting for review", accent: "#7c6bb0" },
   { key: "done", label: "Done", accent: "#3a8a74" },
 ];
-
-// TASK_STAGES only covers the board's own columns; backlog and closed live in
-// separate tabs but still need a dot color wherever a task's stage is shown.
-export const TASK_STAGE_ACCENT: Record<TaskStage, string> = {
-  backlog: "#9aa0aa",
-  closed: "#6b7280",
-  ...(Object.fromEntries(TASK_STAGES.map((s) => [s.key, s.accent])) as Record<
-    Exclude<TaskStage, "backlog" | "closed">,
-    string
-  >),
-};
