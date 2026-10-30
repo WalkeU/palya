@@ -132,3 +132,25 @@ body {
 .animate-fade-in {
   animation: fade-in 0.18s ease-out both;
 }
+
+/* Freshly created task: a brief brand-colored ring pulse so the eye finds it
+   after the board scrolls there. Box-shadow only, dnd-kit owns transform. */
+@keyframes task-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(var(--brand-400) / 0);
+  }
+  25%,
+  65% {
+    box-shadow: 0 0 0 3px rgb(var(--brand-400) / 0.75);
+  }
+}
+.animate-task-flash {
+  animation: task-flash 1.6s ease-in-out 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-task-flash {
+    animation: none;
+    box-shadow: 0 0 0 3px rgb(var(--brand-400) / 0.75);
+  }
+}

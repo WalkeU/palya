@@ -87,10 +87,27 @@ export default function Tasks() {
   const [activeId, setActiveId] = useState<number | null>(null);
   const [selected, setSelected] = useState<Task | null>(null);
   const [creating, setCreating] = useState(false);
+  // `n` makes repeated focus on the same id re-trigger the effect.
+  const [focusTask, setFocusTask] = useState<{ id: number; n: number } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
+
+  useEffect(() => {
+    if (!focusTask) return;
+    // Wait a frame so the (possibly just switched) tab has rendered the card.
+    const raf = requestAnimationFrame(() => {
+      const el = document.querySelector<HTMLElement>(`[data-task-id="${focusTask.id}"]`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+      el.classList.remove("animate-task-flash");
+      void el.offsetWidth;
+      el.classList.add("animate-task-flash");
+      window.setTimeout(() => el.classList.remove("animate-task-flash"), 1800);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [focusTask]);
 
   useEffect(() => {
     Promise.all([
@@ -288,6 +305,20 @@ export default function Tasks() {
     setSelected(updated);
   }
 
+  // After creating a task: jump to its tab, drop any filter that would hide
+  // it, scroll it into view (the effect below) and, unless the modal stays up
+  // for the next one, open its detail panel so it can be tweaked right away.
+  function focusCreated(t: Task, keepOpen: boolean) {
+    setTab(t.stage === "backlog" ? "backlog" : t.stage === "closed" ? "closed" : "board");
+    setSelectedPersonId(null);
+    setSelectedTagIds(new Set());
+    setSearch("");
+    setFocusTask((prev) => ({ id: t.id, n: (prev?.n ?? 0) + 1 }));
+    if (keepOpen) return;
+    setCreating(false);
+    setSelected(t);
+  }
+
   function handleDeleted(id: number) {
     setTasks((prev) => prev.filter((t) => t.id !== id));
     setSelected(null);
@@ -434,9 +465,9 @@ export default function Tasks() {
           defaultStage={newTaskDefaults[tab].stage}
           allowStagePicker={newTaskDefaults[tab].allowPicker}
           onClose={() => setCreating(false)}
-          onCreated={(t) => {
+          onCreated={(t, keepOpen) => {
             setTasks((prev) => [...prev, t]);
-            setCreating(false);
+            focusCreated(t, keepOpen);
           }}
         />
       )}

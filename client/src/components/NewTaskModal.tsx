@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import type { Tag, Task, TaskStage, TeamMember } from "../types";
 import { useStages } from "../utils/stages";
 import { api } from "../api/client";
@@ -22,7 +22,8 @@ export function NewTaskModal({
   parentTaskId?: number;
   parentTaskTitle?: string;
   onClose: () => void;
-  onCreated: (t: Task) => void;
+  /** `keepOpen`: the "Még egy feladat" box was ticked, the modal stays up. */
+  onCreated: (t: Task, keepOpen: boolean) => void;
 }) {
   useEscapeToClose(onClose);
   const [title, setTitle] = useState("");
@@ -40,6 +41,9 @@ export function NewTaskModal({
       : (TASK_STAGES[0]?.key ?? pickedStage);
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [another, setAnother] = useState(false);
+  const [lastCreated, setLastCreated] = useState<string | null>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,7 +77,15 @@ export function NewTaskModal({
           parent_task_id: parentTaskId ?? null,
         },
       });
-      onCreated(data.task);
+      const keepOpen = another && !parentTaskId;
+      onCreated(data.task, keepOpen);
+      if (keepOpen) {
+        // Stage, assignee and tags stay: a batch usually shares them.
+        setLastCreated(data.task.title);
+        setTitle("");
+        setDescription("");
+        titleRef.current?.focus();
+      }
     } catch {
       setError("Nem sikerült létrehozni a feladatot.");
     } finally {
@@ -106,6 +118,7 @@ export function NewTaskModal({
               Cím
             </label>
             <input
+              ref={titleRef}
               autoFocus
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -172,13 +185,33 @@ export function NewTaskModal({
             </div>
           )}
 
-          <div className="flex justify-end gap-2">
+          {lastCreated && (
+            <p
+              role="status"
+              className="mb-3 truncate rounded-lg bg-brand-100 px-3 py-2 text-xs font-medium text-ink-950"
+            >
+              Létrehozva: {lastCreated}
+            </p>
+          )}
+
+          <div className="flex items-center justify-end gap-2">
+            {!parentTaskId && (
+              <label className="mr-auto flex cursor-pointer items-center gap-2 text-xs font-medium text-ink-700">
+                <input
+                  type="checkbox"
+                  checked={another}
+                  onChange={(e) => setAnother(e.target.checked)}
+                  className="h-4 w-4 cursor-pointer accent-brand-600"
+                />
+                Még egy feladat
+              </label>
+            )}
             <button
               type="button"
               onClick={onClose}
               className="rounded-lg px-3.5 py-2 text-sm font-medium text-ink-500 transition hover:text-ink-900"
             >
-              Mégse
+              {lastCreated ? "Kész" : "Mégse"}
             </button>
             <button
               type="submit"
