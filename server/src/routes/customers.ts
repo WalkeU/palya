@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { customersRepo } from "../repositories/customers";
+import { stagesRepo } from "../repositories/stages";
 import { commentsRepo } from "../repositories/comments";
 import {
   createCustomerSchema,
@@ -26,6 +27,9 @@ customersRouter.post("/", (req, res) => {
       .status(400)
       .json({ error: "invalid_input", details: parsed.error.flatten() });
   }
+  if (!stagesRepo.isCustomerStage(parsed.data.stage)) {
+    return res.status(400).json({ error: "invalid_stage" });
+  }
   const user = (req as any).user;
   const customer = customersRepo.create(parsed.data, user.id);
   res.status(201).json({ customer });
@@ -35,6 +39,9 @@ customersRouter.patch("/reorder", (req, res) => {
   const parsed = reorderSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "invalid_input" });
+  }
+  if (!stagesRepo.isCustomerStage(parsed.data.stage)) {
+    return res.status(400).json({ error: "invalid_stage" });
   }
   customersRepo.reorder(parsed.data.stage, parsed.data.orderedIds);
   res.json({ customers: customersRepo.list() });
@@ -48,6 +55,9 @@ customersRouter.patch("/:id", (req, res) => {
     return res
       .status(400)
       .json({ error: "invalid_input", details: parsed.error.flatten() });
+  }
+  if (parsed.data.stage !== undefined && !stagesRepo.isCustomerStage(parsed.data.stage)) {
+    return res.status(400).json({ error: "invalid_stage" });
   }
   const existing = customersRepo.findById(id);
   if (!existing) return res.status(404).json({ error: "not_found" });

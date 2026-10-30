@@ -1,6 +1,6 @@
 import { db } from "../db";
 
-export type Stage = "potential" | "discussion" | "building" | "done";
+export type Stage = string;
 export type ClosedReason = "not_interested" | "failed" | "completed";
 
 export interface Customer {

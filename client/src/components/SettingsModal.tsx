@@ -5,7 +5,9 @@ import { useToast } from "../context/ToastContext";
 import { useAppVersion } from "../hooks/useAppVersion";
 import { api, ApiError } from "../api/client";
 import type { AppSettings, Link, Tag, User } from "../types";
-import { TAG_COLORS } from "../types";
+import { DEFAULT_CUSTOMER_STAGES, DEFAULT_TASK_STAGES, TAG_COLORS } from "../types";
+import { StagesEditor } from "./StagesEditor";
+import { useStages } from "../utils/stages";
 import { Avatar } from "./Avatar";
 import { TagChip } from "./TagChip";
 import { PasswordInput } from "./PasswordInput";
@@ -42,7 +44,7 @@ function resizeToJpegDataUrl(file: File): Promise<string> {
 
 function SettingsCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-ink-100 bg-surface p-6 shadow-card">
+    <div className="rounded-2xl border border-ink-100 bg-surface p-4 shadow-card sm:p-6">
       <h2 className="mb-4 font-display text-lg font-medium text-ink-950">{title}</h2>
       {children}
     </div>
@@ -472,6 +474,8 @@ function LinksTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void }
     autoCloseDays: 30,
     customerPrimaryField: "name",
     expenseSplitEnabled: false,
+    customerStages: DEFAULT_CUSTOMER_STAGES,
+    taskStages: DEFAULT_TASK_STAGES,
   });
   const [loading, setLoading] = useState(true);
   const [togglingVisibility, setTogglingVisibility] = useState(false);
@@ -761,7 +765,7 @@ function LinksTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void }
   );
 }
 
-function CustomersSettingsTab() {
+function CustomersSettingsTab({ onStagesDirtyChange }: { onStagesDirtyChange: (dirty: boolean) => void }) {
   const { showToast } = useToast();
   const [primaryField, setPrimaryField] = useState<AppSettings["customerPrimaryField"]>("name");
   const [loading, setLoading] = useState(true);
@@ -792,31 +796,48 @@ function CustomersSettingsTab() {
   }
 
   return (
-    <SettingsCard title="Ügyfelek megjelenítése">
-      <p className="mb-4 max-w-sm text-sm text-ink-500">
-        Mi jelenjen meg elöl, kiemelve az ügyfélkártyákon és a részletező panelen: a
-        név vagy az üzlet neve.
-      </p>
-      <div className="grid max-w-xs grid-cols-2 gap-2">
-        {(["name", "business"] as const).map((f) => (
-          <button
-            key={f}
-            type="button"
-            disabled={loading || saving}
-            onClick={() => handleSelect(f)}
-            className="rounded-lg border px-3 py-2.5 text-sm font-medium transition disabled:opacity-60"
-            style={{
-              borderColor: primaryField === f ? "#3a8a74" : "rgb(var(--ink-100))",
-              backgroundColor:
-                primaryField === f ? "rgb(var(--brand-100))" : "rgb(var(--ink-50))",
-              color: primaryField === f ? "#2f6f5e" : "rgb(var(--ink-700))",
-            }}
-          >
-            {f === "name" ? "Név" : "Üzlet neve"}
-          </button>
-        ))}
-      </div>
-    </SettingsCard>
+    <div className="space-y-5">
+      <SettingsCard title="Ügyfelek megjelenítése">
+        <p className="mb-4 max-w-sm text-sm text-ink-500">
+          Mi jelenjen meg elöl, kiemelve az ügyfélkártyákon és a részletező panelen: a
+          név vagy az üzlet neve.
+        </p>
+        <div className="grid max-w-xs grid-cols-2 gap-2">
+          {(["name", "business"] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              disabled={loading || saving}
+              onClick={() => handleSelect(f)}
+              className="rounded-lg border px-3 py-2.5 text-sm font-medium transition disabled:opacity-60"
+              style={{
+                borderColor: primaryField === f ? "#3a8a74" : "rgb(var(--ink-100))",
+                backgroundColor:
+                  primaryField === f ? "rgb(var(--brand-100))" : "rgb(var(--ink-50))",
+                color: primaryField === f ? "#2f6f5e" : "rgb(var(--ink-700))",
+              }}
+            >
+              {f === "name" ? "Név" : "Üzlet neve"}
+            </button>
+          ))}
+        </div>
+      </SettingsCard>
+      <SettingsCard title="Fázisok">
+        <p className="mb-4 max-w-md text-sm text-ink-500">
+          Az ügyféltábla oszlopai, balról jobbra. A sorrendet a fogantyúval húzva
+          módosíthatod. Új ügyfél alapból az első fázisba kerül.
+        </p>
+        <StagesEditor
+          field="customerStages"
+          defaults={DEFAULT_CUSTOMER_STAGES}
+          notes={{
+            potential: "Ebben a fázisban adható meg a Priorizálás pontszám.",
+            discussion: "Ebben a fázisban adható meg a Motiváció pontszám.",
+          }}
+          onDirtyChange={onStagesDirtyChange}
+        />
+      </SettingsCard>
+    </div>
   );
 }
 
@@ -880,10 +901,18 @@ function ExpensesSettingsTab() {
   );
 }
 
-function TasksSettingsTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void }) {
+function TasksSettingsTab({
+  onDirtyChange,
+  onStagesDirtyChange,
+}: {
+  onDirtyChange: (dirty: boolean) => void;
+  onStagesDirtyChange: (dirty: boolean) => void;
+}) {
   const { showToast } = useToast();
   const [autoCloseDays, setAutoCloseDays] = useState<string>("30");
   const [savedDays, setSavedDays] = useState<string>("30");
+  const { taskStages } = useStages();
+  const doneLabel = taskStages.find((s) => s.key === "done")?.label ?? "Done";
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -924,35 +953,50 @@ function TasksSettingsTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) =
   }
 
   return (
-    <SettingsCard title="Feladatok automatikus lezárása">
-      <p className="mb-4 max-w-sm text-sm text-ink-500">
-        A "Done" fázisban ennyi napig veszteglő feladat automatikusan átkerül a
-        Lezárva közé. Onnan bármikor visszahozható.
-      </p>
-      <form onSubmit={handleSubmit} className="flex items-end gap-2">
-        <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
-            Napok száma
-          </label>
-          <input
-            type="number"
-            min={1}
-            max={365}
-            disabled={loading}
-            value={autoCloseDays}
-            onChange={(e) => setAutoCloseDays(e.target.value)}
-            className="w-24 rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-surface focus:ring-2 focus:ring-brand-100"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={saving || loading}
-          className="rounded-lg bg-night px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600 disabled:opacity-60"
-        >
-          {saving ? "Mentés…" : "Mentés"}
-        </button>
-      </form>
-    </SettingsCard>
+    <div className="space-y-5">
+      <SettingsCard title="Feladatok automatikus lezárása">
+        <p className="mb-4 max-w-sm text-sm text-ink-500">
+          A(z) "{doneLabel}" fázisban ennyi napig veszteglő feladat automatikusan átkerül a
+          Lezárva közé. Onnan bármikor visszahozható.
+        </p>
+        <form onSubmit={handleSubmit} className="flex items-end gap-2">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
+              Napok száma
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={365}
+              disabled={loading}
+              value={autoCloseDays}
+              onChange={(e) => setAutoCloseDays(e.target.value)}
+              className="w-24 rounded-lg border border-ink-100 bg-ink-50/60 px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-400 focus:bg-surface focus:ring-2 focus:ring-brand-100"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={saving || loading}
+            className="rounded-lg bg-night px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600 disabled:opacity-60"
+          >
+            {saving ? "Mentés…" : "Mentés"}
+          </button>
+        </form>
+      </SettingsCard>
+      <SettingsCard title="Fázisok">
+        <p className="mb-4 max-w-md text-sm text-ink-500">
+          A feladattábla oszlopai, balról jobbra. A sorrendet a fogantyúval húzva
+          módosíthatod. A Backlog és a Lezárva külön fül, ezek nem szerkeszthetők.
+        </p>
+        <StagesEditor
+          field="taskStages"
+          defaults={DEFAULT_TASK_STAGES}
+          lockedKeys={["done"]}
+          notes={{ done: "Az automatikus lezárás ezt a fázist figyeli, ezért nem törölhető." }}
+          onDirtyChange={onStagesDirtyChange}
+        />
+      </SettingsCard>
+    </div>
   );
 }
 
@@ -964,7 +1008,10 @@ type Tab =
   | "ugyfelek"
   | "feladatok"
   | "koltsegek"
-  | "felhasznalok";
+  | "felhasznalok"
+  // dirty-tracking keys only (no sidebar entry)
+  | "ugyfel-allapotok"
+  | "feladat-allapotok";
 
 export function SettingsModal({ onClose }: { onClose: () => void }) {
   const { user } = useAuth();
@@ -1059,7 +1106,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
               })}
             </nav>
 
-            <div className="min-w-0 flex-1 overflow-y-auto px-5 py-6">
+            <div className="min-w-0 flex-1 overflow-y-auto px-3 py-5 sm:px-5 sm:py-6">
               {tab === "profil" && (
                 <ProfileTab onDirtyChange={(d) => setTabDirty("profil", d)} />
               )}
@@ -1068,9 +1115,14 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
               )}
               {tab === "cimkek" && <TagsTab onDirtyChange={(d) => setTabDirty("cimkek", d)} />}
               {tab === "linkek" && <LinksTab onDirtyChange={(d) => setTabDirty("linkek", d)} />}
-              {tab === "ugyfelek" && <CustomersSettingsTab />}
+              {tab === "ugyfelek" && (
+                <CustomersSettingsTab onStagesDirtyChange={(d) => setTabDirty("ugyfel-allapotok", d)} />
+              )}
               {tab === "feladatok" && (
-                <TasksSettingsTab onDirtyChange={(d) => setTabDirty("feladatok", d)} />
+                <TasksSettingsTab
+                  onDirtyChange={(d) => setTabDirty("feladatok", d)}
+                  onStagesDirtyChange={(d) => setTabDirty("feladat-allapotok", d)}
+                />
               )}
               {tab === "koltsegek" && <ExpensesSettingsTab />}
               {tab === "felhasznalok" && isSuperAdmin && (

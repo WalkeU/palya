@@ -19,16 +19,18 @@ export function TaskColumn({
   const { setNodeRef, isOver } = useDroppable({ id: stage });
 
   return (
-    <div className="flex w-[82vw] max-w-[300px] shrink-0 snap-center flex-col sm:w-auto sm:max-w-none sm:min-w-[220px] sm:flex-1 sm:shrink">
-      <div className="mb-3 flex items-center justify-between px-0.5">
-        <div className="flex items-center gap-2">
+    <div className="flex w-[82vw] max-w-[300px] shrink-0 snap-center flex-col sm:w-auto sm:max-w-[400px] sm:min-w-[220px] sm:flex-1 sm:shrink">
+      <div className="mb-3 flex items-center justify-between gap-2 px-0.5">
+        <div className="flex min-w-0 items-center gap-2">
           <span
-            className="h-2 w-2 rounded-full"
+            className="h-2 w-2 shrink-0 rounded-full"
             style={{ backgroundColor: accent }}
           />
-          <h2 className="text-sm font-semibold text-ink-900">{label}</h2>
+          <h2 className="truncate text-sm font-semibold text-ink-900" title={label}>
+            {label}
+          </h2>
         </div>
-        <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-semibold text-ink-500">
+        <span className="shrink-0 rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-semibold text-ink-500">
           {tasks.length}
         </span>
       </div>

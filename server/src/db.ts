@@ -42,7 +42,7 @@ db.exec(`
     phone TEXT,
     email TEXT,
     note TEXT,
-    stage TEXT NOT NULL CHECK (stage IN ('potential', 'discussion', 'building', 'done')) DEFAULT 'potential',
+    stage TEXT NOT NULL DEFAULT 'potential',
     priority INTEGER CHECK (priority BETWEEN 1 AND 5),
     motivation INTEGER CHECK (motivation BETWEEN 1 AND 5),
     position INTEGER NOT NULL DEFAULT 0,
@@ -63,7 +63,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     description TEXT,
-    stage TEXT NOT NULL CHECK (stage IN ('backlog', 'todo', 'in_progress', 'blocked', 'waiting_review', 'done', 'closed')) DEFAULT 'backlog',
+    stage TEXT NOT NULL DEFAULT 'backlog',
     assignee_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     position INTEGER NOT NULL DEFAULT 0,
     highlighted INTEGER NOT NULL DEFAULT 0,
@@ -306,4 +306,37 @@ if (!taskColumns.some((c) => c.name === "parent_task_id")) {
 const expenseColumns = db.prepare("PRAGMA table_info(expenses)").all() as ColumnInfo[];
 if (!expenseColumns.some((c) => c.name === "settled")) {
   db.exec("ALTER TABLE expenses ADD COLUMN settled INTEGER NOT NULL DEFAULT 0");
+}
+
+// Migration: customer and task stages became user-editable (Beállítások), so
+// the fixed `CHECK (stage IN (...))` constraints have to go. SQLite can't drop
+// a CHECK in place - rebuild each table from its own stored CREATE statement
+// minus that clause. Foreign keys are switched off meanwhile, otherwise
+// DROP TABLE would cascade-delete comments / task_tags / task_comments.
+for (const table of ["customers", "tasks"] as const) {
+  const sql = (
+    db
+      .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?")
+      .get(table) as { sql: string } | undefined
+  )?.sql;
+  if (!sql || !/CHECK \(stage IN \([^)]*\)\)/.test(sql)) continue;
+  const tmp = `${table}_nostagecheck`;
+  const newSql = sql
+    .replace(/CHECK \(stage IN \([^)]*\)\)\s*/, "")
+    .replace(/CREATE TABLE\s+"?\w+"?/, `CREATE TABLE ${tmp}`);
+  db.pragma("foreign_keys = OFF");
+  try {
+    db.transaction(() => {
+      db.exec(newSql);
+      db.exec(`INSERT INTO ${tmp} SELECT * FROM ${table}`);
+      db.exec(`DROP TABLE ${table}`);
+      db.exec(`ALTER TABLE ${tmp} RENAME TO ${table}`);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_${table}_stage ON ${table}(stage)`);
+      if (table === "tasks") {
+        db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_parent ON tasks(parent_task_id)");
+      }
+    })();
+  } finally {
+    db.pragma("foreign_keys = ON");
+  }
 }

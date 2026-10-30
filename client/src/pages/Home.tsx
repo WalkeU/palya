@@ -13,7 +13,7 @@ import {
 import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { AppSettings, Link, Note, PollType } from "../types";
-import { TAG_COLORS } from "../types";
+import { DEFAULT_CUSTOMER_STAGES, DEFAULT_TASK_STAGES, TAG_COLORS } from "../types";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { TopBar } from "../components/TopBar";
@@ -501,6 +501,8 @@ export default function Home() {
     autoCloseDays: 30,
     customerPrimaryField: "name",
     expenseSplitEnabled: false,
+    customerStages: DEFAULT_CUSTOMER_STAGES,
+    taskStages: DEFAULT_TASK_STAGES,
   });
   const [loading, setLoading] = useState(true);
   const [composing, setComposing] = useState(false);

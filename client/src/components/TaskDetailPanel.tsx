@@ -1,7 +1,8 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import type { Tag, Task, TaskComment, TaskStage, TeamMember } from "../types";
-import { TASK_STAGE_ACCENT, TASK_STAGES } from "../types";
+import { taskStageAccent, useStages } from "../utils/stages";
 import { api } from "../api/client";
+import { StagePicker } from "./StagePicker";
 import { TagChip } from "./TagChip";
 import { AssigneePicker } from "./AssigneePicker";
 import { Avatar } from "./Avatar";
@@ -43,6 +44,7 @@ export function TaskDetailPanel({
     title: task.title,
     description: task.description || "",
   });
+  const { taskStages: TASK_STAGES } = useStages();
   const [stage, setStage] = useState<TaskStage>(task.stage);
   const [assigneeId, setAssigneeId] = useState<string>(
     task.assignee_id ? String(task.assignee_id) : ""
@@ -261,7 +263,7 @@ export function TaskDetailPanel({
         <div className="flex-1 overflow-y-auto px-5 py-5">
           {stage === "backlog" && (
             <button
-              onClick={() => handleStageChange("todo")}
+              onClick={() => handleStageChange(TASK_STAGES[0].key)}
               className="mb-5 w-full rounded-lg bg-night py-2 text-sm font-medium text-white transition hover:bg-brand-600"
             >
               Táblára
@@ -280,27 +282,12 @@ export function TaskDetailPanel({
             <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500">
               Fázis
             </span>
-            <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
-              {TASK_STAGES.map((s) => (
-                <button
-                  key={s.key}
-                  onClick={() => handleStageChange(s.key)}
-                  className="flex flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2.5 text-center text-[10px] font-medium leading-tight transition"
-                  style={{
-                    borderColor: stage === s.key ? s.accent : "rgb(var(--ink-100))",
-                    backgroundColor:
-                      stage === s.key ? `${s.accent}1a` : "rgb(var(--surface))",
-                    color: stage === s.key ? s.accent : "rgb(var(--ink-700))",
-                  }}
-                >
-                  <span
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ backgroundColor: s.accent }}
-                  />
-                  {s.label}
-                </button>
-              ))}
-            </div>
+            <StagePicker
+              stages={TASK_STAGES}
+              value={stage}
+              onChange={handleStageChange}
+              idleBackground="surface"
+            />
             {(stage === "backlog" || stage === "closed") && (
               <p className="mt-1.5 text-[11px] text-ink-500">
                 Jelenleg: {stage === "backlog" ? "Backlog" : "Lezárva"}
@@ -395,7 +382,7 @@ export function TaskDetailPanel({
                   >
                     <span
                       className="h-1.5 w-1.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: TASK_STAGE_ACCENT[c.stage] }}
+                      style={{ backgroundColor: taskStageAccent(TASK_STAGES, c.stage) }}
                     />
                     <span
                       className={`min-w-0 flex-1 truncate text-sm ${
@@ -500,8 +487,8 @@ export function TaskDetailPanel({
           members={members}
           defaultStage={
             TASK_STAGES.some((s) => s.key === task.stage)
-              ? (task.stage as (typeof TASK_STAGES)[number]["key"])
-              : "todo"
+              ? task.stage
+              : TASK_STAGES[0].key
           }
           allowStagePicker
           parentTaskId={task.id}
