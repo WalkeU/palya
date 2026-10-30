@@ -1,6 +1,7 @@
 # Changelog
 
 [Unreleased]
+- 2026-10-30 release v1.2.6
 - 2026-10-30 - Added editable customer and task stages in Beállítások (rename, recolor, reorder, add, remove; "Default" restores the built-in set; Done stays fixed for auto-close)
 - 2026-10-30 - Fixed auto-close skipping tasks without done_at (e.g. created straight into Done); sweep now falls back to updated_at
 - 2026-10-18 release v1.2.5
