@@ -72,8 +72,8 @@ function ProfileTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void
         const lines = data.content
           .split("\n")
           .map((l) => l.trim())
-          .filter((l) => l.startsWith("- "))
-          .map((l) => l.slice(2));
+          .filter((l) => l.startsWith("- ") || (l.startsWith("## ") && l !== "## Unreleased"))
+          .map((l) => (l.startsWith("## ") ? l : l.slice(2)));
         setChangelogLines(lines);
       } finally {
         setChangelogLoading(false);
@@ -235,7 +235,7 @@ function ProfileTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void
               ) : (
                 <ul className="space-y-1">
                   {changelogLines.map((line, i) => {
-                    const isRelease = /^\d{4}-\d{2}-\d{2} release v/.test(line);
+                    const isRelease = line.startsWith("## ");
                     return (
                       <li
                         key={i}
@@ -245,7 +245,7 @@ function ProfileTab({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void
                             : "text-xs text-ink-500"
                         }
                       >
-                        {line}
+                        {isRelease ? line.slice(3) : line}
                       </li>
                     );
                   })}
