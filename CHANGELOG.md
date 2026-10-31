@@ -1,6 +1,7 @@
 # Changelog
 
 [Unreleased]
+- 2026-10-31 release v1.2.7
 - 2026-10-30 - New task is scrolled into view with a highlight and opens its detail panel; added a "Még egy feladat" checkbox to create several tasks in a row
 - 2026-10-30 release v1.2.6
 - 2026-10-30 - Added editable customer and task stages in Beállítások (rename, recolor, reorder, add, remove; "Default" restores the built-in set; Done stays fixed for auto-close)
