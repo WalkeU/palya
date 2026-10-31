@@ -1,28 +1,30 @@
 # Changelog
 
 [Unreleased]
-- 2026-10-31 release v1.2.7
+- 2026-10-31 - Fixed the changelog order: release markers now sit below the entries they shipped, so every entry is listed under the right version
+- 2026-10-31 release v1.2.8
 - 2026-10-30 - New task is scrolled into view with a highlight and opens its detail panel; added a "Még egy feladat" checkbox to create several tasks in a row
-- 2026-10-30 release v1.2.6
+- 2026-10-31 release v1.2.7
 - 2026-10-30 - Added editable customer and task stages in Beállítások (rename, recolor, reorder, add, remove; "Default" restores the built-in set; Done stays fixed for auto-close)
 - 2026-10-30 - Fixed auto-close skipping tasks without done_at (e.g. created straight into Done); sweep now falls back to updated_at
-- 2026-10-18 release v1.2.5
+- 2026-10-30 release v1.2.6
 - 2026-10-18 - Added a Rendezetlen view next to Havi/Összes on the expenses page, listing every unsettled expense across all periods
-- 2026-10-18 release v1.2.4
+- 2026-10-18 release v1.2.5
 - 2026-10-18 - Fixed trust proxy accepting spoofed X-Forwarded-For (rate-limit bypass, ERR_ERL_PERMISSIVE_TRUST_PROXY): now only private-network proxies are trusted, overridable via TRUST_PROXY
 - 2026-10-18 - Moved the settings tabs into a left-side vertical menu with icons (Feather, bundled locally)
-- 2026-10-18 release v1.2.3
+- 2026-10-18 release v1.2.4
 - 2026-10-18 - Added optional expense splitting (Költségmegosztás): per-expense participants, payer share deducted automatically, a who-owes-whom card and a one-click settle-up
-- 2026-10-18 release v1.2.2
+- 2026-10-18 release v1.2.3
 - 2026-10-18 - Added an Elszámolva (settled) mark to expenses: one-click check per row, an Elszámolatlan filter, and per-person "still owed" amounts in the summary
 - 2026-10-18 - Added a Költségek (expenses) page: log who bought what, for how much and when, with monthly totals, per-person and per-category breakdowns, filters and CSV export
-- 2026-10-03 release v1.2.1
+- 2026-10-18 release v1.2.2
 - 2026-10-03 - Gave subtasks their own centralized accent color (plum) instead of reusing the interactive brand teal, and showed the parent task's title in the subtask panel header
 - 2026-10-03 - Fixed a broken (white) subtask panel border and blocked nesting subtasks inside subtasks
 - 2026-10-03 - Moved the Backlogba button to the footer and gave the subtask detail panel a subtle visual distinction
 - 2026-10-02 - Fixed subtask position (now inserts under its parent), stale progress badge counts, and the badge icon
 - 2026-10-02 - Added a "Kész" close reason for customers and a reason filter on the Lezárva list; closed cards no longer show the priority/motivation badge
 - 2026-09-30 - Added a changelog viewer in Settings and a clearer red drag-over-trash warning when deleting a note
+- 2026-10-03 release v1.2.1
 - 2026-09-30 - Added subtasks: create sub-tasks under a task, draggable on the board like any other task and labeled with their parent
 - 2026-09-30 - Settings now warns before closing with unsaved changes
 - 2026-09-30 release v1.2.0
