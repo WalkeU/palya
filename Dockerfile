@@ -21,7 +21,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY server/package*.json ./server/
-RUN cd server && npm ci --omit=dev
+# npm is only needed for the install; drop it (and its bundled deps, e.g. tar) from the runtime image
+RUN cd server && npm ci --omit=dev && npm cache clean --force \
+    && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 COPY --from=server-build /app/server/dist ./server/dist
 COPY --from=client-build /app/client-dist ./client-dist

@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Fixed CRITICAL image CVEs: updated proxy-addr to 2.0.8 and removed npm (with its bundled tar) from the runtime image
 
 ## v1.2.9 - 2026-10-31
 - Changed the changelog to per-release sections (## vX.Y.Z - date) and updated the in-app changelog viewer to match
