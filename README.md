@@ -1,8 +1,40 @@
 # Pálya
 
+A self-hosted team workspace for a small team: a client pipeline Kanban, a task Kanban, a shared home page with notes and polls, and an expense log. The UI is in Hungarian; it runs in production for a real team.
+
+**Stack:** React · TypeScript · Vite · Tailwind CSS · dnd-kit · Express · SQLite (better-sqlite3) · Zod · Docker
+
+## Features
+
+- **Clients:** Kanban board across pipeline stages with priority and motivation scores, comments, and a filterable archive of closed clients (nothing is deleted, everything can be restored).
+- **Tasks:** team Kanban (Todo, In progress, Blocked, Waiting for review, Done) with backlog, labels, assignees, highlights, comments, search and filters. Tasks can have subtasks that are full draggable cards. Done tasks are archived automatically after a configurable period.
+- **Expenses:** who paid what and when, monthly view with month-over-month change, breakdown by payer and category, settled and unsettled tracking ("who is owed how much"), CSV export.
+- **Home:** shared draggable notes that can also be single or multiple choice polls, plus a customisable link list.
+- **Settings:** profile (avatar, nickname, dark and light mode, changelog viewer), password change, labels, links, user management for the super admin.
+
+## Engineering notes
+
+- Session based auth with bcrypt hashing, rate limited login and Helmet security headers; request validation with Zod.
+- Repository layer over SQLite; the super admin is seeded on first start, its generated password is printed once and must be changed on first login.
+- Single Docker image, data in a named volume, documented backup command.
+- Versioned releases with a [CHANGELOG](CHANGELOG.md).
+
+## Quick start
+
+```bash
+cp .env.example .env   # set SESSION_SECRET, PORT and SEED_ADMIN_EMAIL
+docker compose up --build -d
+```
+
+The app listens on the `PORT` from `.env`. The first login and backups are described in the Hungarian section below.
+
+---
+
+## Részletes leírás (magyarul)
+
 Önhosztolt, magyar nyelvű csapat-alkalmazás: ügyfélkövető Kanban tábla, csapat feladatkövető Kanban tábla, egy kezdőlap közös jegyzetekkel, szavazásokkal és linkekkel, valamint egy költségnapló.
 
-## Funkciók
+### Funkciók
 
 - **Ügyfelek** (`/ugyfelek`): Kanban tábla a **Potenciál → Egyeztetés → Kiépítés alatt → Kész** fázisokon át, priorizálás/motiváció skálával, kommentekkel. Egy ügyfél "Kész" / "Nem érdekli" / "Meghiúsult" jelöléssel zárható le (nem törlődik, bármikor visszaállítható a Lezárva listáról, ami ok szerint is szűrhető). Beállításban választható, hogy a név vagy az üzlet neve jelenjen meg elöl.
 - **Feladatok** (`/feladatok`): csapat Kanban tábla (Todo → Work in Progress → Blocked → Waiting for review → Done), külön Backlog és Lezárva nézettel. Címkék, felelős-hozzárendelés, kiemelés (piros háttér), kommentek, keresés cím alapján, szűrés felelős vagy "nincs hozzárendelve" szerint. Egy feladathoz alfeladatok adhatók ("+ Alfeladat") - ezek maguk is teljes, húzható task-kártyák a táblán, a szülőjük címkéjével jelölve és egy kicsit eltérő panel-stílussal, de nem lehet beléjük újabb alfeladatot rakni. A Done fázisban egy beállítható ideig (alapból 30 nap) veszteglő feladat automatikusan átkerül a Lezárva közé, onnan visszahozható.
@@ -10,7 +42,7 @@
 - **Kezdőlap** (`/`): csapat közös jegyzetei (szabadon húzhatók/átrendezhetők, a kukára húzva törölhetők - húzás közben pirosra vált a jegyzet jelezve a törlést -, szavazásként is használhatók - egyszeres vagy többszörös választással, opciók utólag is szerkeszthetők), és testreszabható linkek listája.
 - **Beállítások**: profil (avatar, becenév, sötét/világos mód, verziószám + changelog megtekintő), jelszóváltás, címkék kezelése, linkek szerkesztése, ügyfél-mező sorrend, feladatok automatikus lezárásának időtartama, felhasználókezelés (superadmin). Mentetlen módosítással próbált bezárásnál figyelmeztet.
 
-## Indítás
+### Indítás
 
 ```bash
 cp .env.example .env   # állítsd be a SESSION_SECRET-et, a PORT-ot és a SEED_ADMIN_EMAIL-t
@@ -19,7 +51,7 @@ docker compose up --build -d
 
 Az app a `.env`-ben megadott `PORT`-on érhető el.
 
-## Seed jelszó megnézése
+### Seed jelszó megnézése
 
 Első indításkor a rendszer létrehozza a superadmin usert (a `.env`-ben megadott `SEED_ADMIN_EMAIL`-lel) és kiírja a generált jelszavát a logba. **Csak ekkor, egyszer.**
 
@@ -29,7 +61,7 @@ docker compose logs palya | grep -A2 Jelszó
 
 Ezzel a jelszóval kell először belépni, utána kötelező lecserélni.
 
-## Adatok / mentés
+### Adatok / mentés
 
 Az adatbázis egy Docker-kezelt named volume-ban van (`docker volume ls` → `..._data`), nem a projekt mappájában, mert ez host-független és mindenhol megbízhatóan írható. Mentéshez:
 
@@ -39,6 +71,6 @@ docker run --rm -v palya_data:/data -v "$(pwd)":/backup alpine tar czf /backup/a
 
 (a volume nevét `docker volume ls`-ből ellenőrizd, ha más a compose projekt neve).
 
-## Fejlesztés
+### Fejlesztés
 
 Lásd `CLAUDE.md` az architektúra és a gyakori parancsok leírásáért.
